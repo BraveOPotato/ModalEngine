@@ -6,7 +6,7 @@ A web component modal that uses JSON config to procedurally update itself. <br>
 * Easy setup of multiple modals
 * Easy setup of mulitple pages per modal
 * Easy to implement into existing codebase
-* Small footprint: 7.6Kb
+* Small footprint: <7Kb
 * Optional callback on success
 
 ## What it looks like:
@@ -16,16 +16,16 @@ A web component modal that uses JSON config to procedurally update itself. <br>
 </p>
 
 ## How to use:
-Add link to the web component in the HTML like so:
+1. Add link to the web component in the HTML like so:
 ```html
 <script src="https://raw.githubusercontent.com/BraveOPotato/ProceduralModal/refs/heads/main/modal-comp.js"></script>
 ```
-Then, in the JavaScript, you can simply define the modals and their configs. The following is an example modal:
+2. Then, in the JavaScript, you can simply define the modals and their configs. The following is an example modal:
 
 ```js
-customModal = new RuntimeModal();
+modalEngine = new RuntimeModal();
 
-customModal.registerModals([
+modalEngine.registerModals([
   {
     modalName: "add-link",
     title: "Add Link",
@@ -46,9 +46,9 @@ customModal.registerModals([
 ]);
 ```
 
-Finally, add an `onclick` attribute to an HTML element to show the modal in the `onclick` event:
+3. Finally, add an `onclick` attribute to an HTML element to show the modal in the `onclick` event:
 ```html
-<button onclick="customModal.openModal('add-link')">New</button>
+<button onclick="modalEngine.openModal('add-link')">New</button>
 ```
 
 ## Usage:
