@@ -406,15 +406,22 @@ class ProceduralModal extends HTMLElement {
     const formDataJson = Object.fromEntries(formData.entries());
     const csrfToken = this.getCookie("csrftoken");
 
-    const response = await fetch(this.#installerForm.action, {
-      method: "POST",
-      mode: "same-origin",
-      headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-        ...(csrfToken && { "X-CSRFToken": csrfToken }),
-      },
-      body: JSON.stringify(formDataJson),
-    });
+    let response = null;
+
+    // Use custom submission handler if defined.
+    if (this.#installerForm.onSubmit) { 
+      response = await this.#installerForm.onSubmit(formDataJson);
+    } else {
+      response = await fetch(this.#installerForm.action, {
+        method: "POST",
+        mode: "same-origin",
+        headers: {
+          "Content-Type": "application/json; charset=UTF-8",
+          ...(csrfToken && { "X-CSRFToken": csrfToken }),
+        },
+        body: JSON.stringify(formDataJson),
+      });
+    }
 
     if (response.ok) {
       this.closeProceduralModal();
