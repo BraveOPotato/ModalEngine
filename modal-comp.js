@@ -418,8 +418,9 @@ class ProceduralModal extends HTMLElement {
 
     if (response.ok) {
       this.closeProceduralModal();
-      if (this.#installerConfig.callbackFn) this.#installerConfig.callbackFn(formDataJson);
+      if (this.#installerConfig.onSuccess) this.#installerConfig.onSuccess(this.#installerConfig, formDataJson);
     } else {
+      if (this.#installerConfig.onFailure) this.#installerConfig.onFailure(this.#installerConfig, formDataJson);
       alert("Failed to submit form.");
     }
   }
