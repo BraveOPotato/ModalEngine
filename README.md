@@ -15,7 +15,7 @@ A web component modal that uses JSON config to procedurally update itself. <br>
   <img src="https://raw.githubusercontent.com/BraveOPotato/ProceduralModal/refs/heads/main/images/modal.png" alt="Screenshot"/>
 </p>
 
-## How to use:
+## How to use: (deprecated. Better documentation at: [docs](https://raw.githubusercontent.com/BraveOPotato/ModalEngine/refs/heads/main/docs/modalengine.min.js))
 1. Add link to the web component in the HTML like so:
 ```html
 <script src="https://raw.githubusercontent.com/BraveOPotato/ProceduralModal/refs/heads/main/modal-comp.js"></script>

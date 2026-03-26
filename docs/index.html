@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ProceduralModal — Documentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Literata:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0c0c10;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: #2a2a3d;
+    --accent: #7b6cff;
+    --accent2: #00e5a0;
+    --text: #e8e8f0;
+    --muted: #7070a0;
+    --code-bg: #0a0a12;
+    --win-blue: #0078d7;
+    --win-header: linear-gradient(to bottom, #0078d7, #005a9e);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Literata', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 32px 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--text);
+    padding: 0 24px 28px;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: -0.02em;
+  }
+
+  .sidebar-logo span {
+    color: var(--accent);
+  }
+
+  .sidebar-logo .version {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 4px;
+  }
+
+  .sidebar-nav {
+    padding: 20px 0;
+    flex: 1;
+  }
+
+  .nav-group-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 24px 6px;
+  }
+
+  .nav-link {
+    display: block;
+    font-family: 'Syne', sans-serif;
+    font-size: 13.5px;
+    font-weight: 400;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 7px 24px;
+    border-left: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+
+  .nav-link:hover {
+    color: var(--text);
+    background: var(--surface2);
+  }
+
+  .nav-link.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(123,108,255,0.07);
+  }
+
+  /* ── Main content ── */
+  .main {
+    padding: 64px 80px;
+    max-width: 860px;
+  }
+
+  /* ── Sections ── */
+  .section {
+    margin-bottom: 80px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Hero ── */
+  .hero {
+    margin-bottom: 80px;
+    padding-bottom: 56px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 52px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero-desc {
+    font-size: 18px;
+    color: var(--muted);
+    line-height: 1.65;
+    max-width: 560px;
+    font-weight: 300;
+  }
+
+  .hero-badges {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--surface);
+  }
+
+  .badge.accent { border-color: var(--accent); color: var(--accent); }
+  .badge.green { border-color: var(--accent2); color: var(--accent2); }
+
+  /* ── Section headers ── */
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    margin-top: 32px;
+  }
+
+  h4 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    margin-bottom: 6px;
+    margin-top: 24px;
+    letter-spacing: 0.03em;
+  }
+
+  p { color: var(--muted); margin-bottom: 16px; }
+  p strong { color: var(--text); font-weight: 400; }
+
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+
+  /* ── Code blocks ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 24px;
+    overflow-x: auto;
+    margin: 16px 0 24px;
+    position: relative;
+  }
+
+  pre code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.75;
+    color: #c9c9e8;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    color: var(--accent);
+  }
+
+  pre code { background: none; border: none; padding: 0; color: inherit; }
+
+  .kw  { color: #c084fc; }
+  .str { color: #86efac; }
+  .key { color: #7dd3fc; }
+  .num { color: #fbbf24; }
+  .cmt { color: #4a5568; font-style: italic; }
+  .fn  { color: #f9a8d4; }
+  .obj { color: var(--text); }
+
+  /* ── Copy button ── */
+  .code-wrap { position: relative; }
+
+  .copy-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .copy-btn:hover { color: var(--text); border-color: var(--muted); }
+  .copy-btn.copied { color: var(--accent2); border-color: var(--accent2); }
+
+  /* ── API table ── */
+  .api-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+
+  .api-table th {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-align: left;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .api-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(42,42,61,0.5);
+    vertical-align: top;
+    color: var(--muted);
+  }
+
+  .api-table tr:last-child td { border-bottom: none; }
+
+  .api-table td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--accent2);
+    white-space: nowrap;
+  }
+
+  .api-table td:nth-child(2) {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #c084fc;
+    white-space: nowrap;
+  }
+
+  .api-table tr:hover td { background: rgba(123,108,255,0.04); }
+
+  /* ── Demo area ── */
+  .demo-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    margin: 20px 0 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .demo-box::before {
+    content: 'LIVE DEMO';
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--accent2);
+    opacity: 0.6;
+  }
+
+  .demo-box p {
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+
+  .demo-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .trigger-btn {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: 1px solid var(--accent);
+    background: rgba(123,108,255,0.1);
+    color: var(--accent);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.02em;
+  }
+
+  .trigger-btn:hover {
+    background: rgba(123,108,255,0.2);
+    transform: translateY(-1px);
+  }
+
+  .trigger-btn:active { transform: translateY(0); }
+
+  .trigger-btn.green {
+    border-color: var(--accent2);
+    background: rgba(0,229,160,0.08);
+    color: var(--accent2);
+  }
+
+  .trigger-btn.green:hover { background: rgba(0,229,160,0.16); }
+
+  /* ── Callout ── */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: rgba(123,108,255,0.07);
+    padding: 16px 20px;
+    border-radius: 0 6px 6px 0;
+    margin: 20px 0;
+  }
+
+  .callout.warning { border-left-color: #f59e0b; background: rgba(245,158,11,0.06); }
+  .callout.success { border-left-color: var(--accent2); background: rgba(0,229,160,0.06); }
+
+  .callout p { margin: 0; font-size: 14px; }
+
+  .callout-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    color: var(--accent);
+  }
+
+  .callout.warning .callout-title { color: #f59e0b; }
+  .callout.success .callout-title { color: var(--accent2); }
+
+  /* ── Field type grid ── */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 16px 0 24px;
+  }
+
+  .field-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+  }
+
+  .field-card-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent2);
+    margin-bottom: 6px;
+  }
+
+  .field-card p {
+    font-size: 13px;
+    margin: 0;
+  }
+
+  /* ── Output result ── */
+  .result-box {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-top: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: #86efac;
+    min-height: 48px;
+    white-space: pre-wrap;
+    display: none;
+  }
+
+  .result-box.visible { display: block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      Modal<span>Engine</span>
+      <div class="version">v1.0.0 · Web Component</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-label">Getting Started</div>
+      <a href="#overview" class="nav-link active">Overview</a>
+      <a href="#installation" class="nav-link">Installation</a>
+      <a href="#quickstart" class="nav-link">Quick Start</a>
+
+      <div class="nav-group-label">API Reference</div>
+      <a href="#config" class="nav-link">Config Object</a>
+      <a href="#fields" class="nav-link">Field Types</a>
+      <a href="#callbacks" class="nav-link">Callbacks</a>
+      <a href="#runtimemodal" class="nav-link">RuntimeModal</a>
+
+      <div class="nav-group-label">Interactive Demos</div>
+      <a href="#demo-simple" class="nav-link">Simple Form</a>
+      <a href="#demo-multi" class="nav-link">Multi-Page</a>
+      <a href="#demo-custom" class="nav-link">Custom Submit</a>
+    </nav>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- Hero -->
+    <div class="hero" id="overview">
+      <div class="hero-eyebrow">// Web Component · No Dependencies</div>
+      <h1>Modal<span>Engine</span></h1>
+      <p class="hero-desc">
+        A declarative, multi-page form modal engine built as a native Web Component.
+        Define your wizard flows in plain config objects — no framework required.
+      </p>
+      <div class="hero-badges">
+        <span class="badge accent">Zero dependencies</span>
+        <span class="badge green">Shadow DOM isolated</span>
+        <span class="badge">Draggable</span>
+        <span class="badge">Multi-page</span>
+        <span class="badge">Custom callbacks</span>
+      </div>
+    </div>
+
+    <!-- Installation -->
+    <section class="section" id="installation">
+      <h2>Installation</h2>
+      <hr class="section-divider"/>
+      <p>Drop the script into your page. No build step, no npm, no bundler needed.</p>
+
+      <h3>Script tag</h3>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="kw">&lt;script</span> <span class="key">src</span>=<span class="str">"procedural-modal.js"</span> <span class="key">defer</span><span class="kw">&gt;&lt;/script&gt;</span></code></pre>
+      </div>
+
+      <h3>Or inline</h3>
+      <p>Paste the source directly into a <code>&lt;script&gt;</code> block at the bottom of your <code>&lt;body&gt;</code>.</p>
+
+      <div class="callout success">
+        <div class="callout-title">✓ Auto-registers</div>
+        <p>The script automatically calls <code>customElements.define("procedural-modal", ProceduralModal)</code>, so the element is available immediately.</p>
+      </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="section" id="quickstart">
+      <h2>Quick Start</h2>
+      <hr class="section-divider"/>
+      <p>Two objects are all you need: a <strong>config</strong> describing your modal, and an instance of <strong>RuntimeModal</strong> to launch it.</p>
+
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="cmt">// 1. Create the runtime manager (once, globally)</span>
+<span class="kw">const</span> <span class="obj">runtime</span> = <span class="kw">new</span> <span class="fn">RuntimeModal</span>();
+
+<span class="cmt">// 2. Register one or more modal configs</span>
+<span class="obj">runtime</span>.<span class="fn">registerModals</span>([
+  {
+    <span class="key">modalName</span>: <span class="str">"myModal"</span>,
+    <span class="key">title</span>:     <span class="str">"My First Modal"</span>,
+    <span class="key">submitUrl</span>: <span class="str">"/api/submit"</span>,
+    <span class="key">pages</span>: [
+      {
+        <span class="key">title</span>: <span class="str">"Step 1"</span>,
+        <span class="key">fields</span>: [
+          {
+            <span class="key">type</span>:        <span class="str">"text"</span>,
+            <span class="key">name</span>:        <span class="str">"username"</span>,
+            <span class="key">label</span>:       <span class="str">"Username"</span>,
+            <span class="key">placeholder</span>: <span class="str">"Enter username…"</span>
+          }
+        ]
+      }
+    ]
+  }
+]);
+
+<span class="cmt">// 3. Open it from anywhere</span>
+<span class="obj">runtime</span>.<span class="fn">openModal</span>(<span class="str">"myModal"</span>);</code></pre>
+      </div>
+    </section>
+
+    <!-- Config Object -->
+    <section class="section" id="config">
+      <h2>Config Object</h2>
+      <hr class="section-divider"/>
+      <p>Every modal is defined by a plain JavaScript object with the following top-level properties.</p>
+
+      <table class="api-table">
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>modalName</td>
+            <td>string</td>
+            <td>✓</td>
+            <td>Unique identifier used to open this modal via <code>runtime.openModal(name)</code>.</td>
+          </tr>
+          <tr>
+            <td>title</td>
+            <td>string</td>
+            <td>✓</td>
+            <td>Displayed in the window title bar alongside the current page title.</td>
+          </tr>
+          <tr>
+            <td>submitUrl</td>
+            <td>string</td>
+            <td>✓*</td>
+            <td>POST endpoint. Required unless you provide a custom <code>onSubmit</code> handler.</td>
+          </tr>
+          <tr>
+            <td>method</td>
+            <td>string</td>
+            <td>—</td>
+            <td>HTTP method for fetch. Defaults to <code>"POST"</code>.</td>
+          </tr>
+          <tr>
+            <td>pages</td>
+            <td>Page[]</td>
+            <td>✓</td>
+            <td>Ordered array of page objects. Each page becomes a wizard step.</td>
+          </tr>
+          <tr>
+            <td>onSubmit</td>
+            <td>function</td>
+            <td>—</td>
+            <td>Custom async submit handler. Overrides the built-in <code>fetch</code> call.</td>
+          </tr>
+          <tr>
+            <td>onSuccess</td>
+            <td>function</td>
+            <td>—</td>
+            <td>Called after a successful submission. Receives <code>(config, formData)</code>.</td>
+          </tr>
+          <tr>
+            <td>onFailure</td>
+            <td>function</td>
+            <td>—</td>
+            <td>Called when submission fails. Receives <code>(config, formData)</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Page Object</h3>
+      <p>Each entry in <code>pages</code> has the following shape:</p>
+
+      <table class="api-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>title</td>
+            <td>string</td>
+            <td>Appended to the modal header: <em>Modal Title — Page Title</em>.</td>
+          </tr>
+          <tr>
+            <td>fields</td>
+            <td>Field[]</td>
+            <td>Array of field descriptor objects rendered on this page.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Field Types -->
+    <section class="section" id="fields">
+      <h2>Field Types</h2>
+      <hr class="section-divider"/>
+      <p>Each field object in a <code>fields</code> array renders a form control. The <code>type</code> property drives which element is created.</p>
+
+      <div class="field-grid">
+        <div class="field-card">
+          <div class="field-card-name">text · email · password · number</div>
+          <p>Renders an <code>&lt;input&gt;</code> of the given type.</p>
+        </div>
+        <div class="field-card">
+          <div class="field-card-name">textarea</div>
+          <p>Renders a resizable <code>&lt;textarea&gt;</code>. Height defaults to 60 px.</p>
+        </div>
+        <div class="field-card">
+          <div class="field-card-name">select</div>
+          <p>Renders a <code>&lt;select&gt;</code> dropdown. Requires an <code>options</code> array of strings.</p>
+        </div>
+        <div class="field-card">
+          <div class="field-card-name">image</div>
+          <p>Renders a full-width <code>&lt;img&gt;</code>. Requires <code>src</code>; optional <code>alt</code>.</p>
+        </div>
+      </div>
+
+      <h3>Field Properties</h3>
+      <table class="api-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>type</td><td>string</td><td>Field type (see above). Defaults to <code>"text"</code>.</td></tr>
+          <tr><td>name</td><td>string</td><td>Form field name. Included in the submitted JSON payload.</td></tr>
+          <tr><td>label</td><td>string</td><td>Text shown above the input.</td></tr>
+          <tr><td>placeholder</td><td>string</td><td>Input placeholder text.</td></tr>
+          <tr><td>value</td><td>string</td><td>Default value pre-filled in the field.</td></tr>
+          <tr><td>tooltip</td><td>string</td><td>Hover tooltip shown on the label. Adds a dotted underline.</td></tr>
+          <tr><td>options</td><td>string[]</td><td>Required for <code>select</code>. List of option values/labels.</td></tr>
+          <tr><td>src</td><td>string</td><td>Image URL. Required for <code>image</code> type.</td></tr>
+          <tr><td>alt</td><td>string</td><td>Alt text for <code>image</code> type.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <div class="callout-title">State persistence</div>
+        <p>Values entered on any page are saved when navigating forward or backward. Returning to an earlier page re-populates every field automatically.</p>
+      </div>
+    </section>
+
+    <!-- Callbacks -->
+    <section class="section" id="callbacks">
+      <h2>Callbacks</h2>
+      <hr class="section-divider"/>
+
+      <h3>onSubmit <em>(async)</em></h3>
+      <p>Replaces the built-in <code>fetch</code> call entirely. Must return a Response-like object with an <code>ok</code> boolean property.</p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="key">onSubmit</span>: <span class="kw">async</span> (<span class="obj">config</span>, <span class="obj">formData</span>) => {
+  <span class="kw">const</span> <span class="obj">res</span> = <span class="kw">await</span> <span class="fn">myCustomApiCall</span>(<span class="obj">formData</span>);
+  <span class="kw">return</span> { <span class="key">ok</span>: <span class="obj">res</span>.<span class="key">success</span> };  <span class="cmt">// must have .ok</span>
+}</code></pre>
+      </div>
+
+      <h3>onSuccess</h3>
+      <p>Fires <em>after</em> the modal closes on a successful submission.</p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="key">onSuccess</span>: (<span class="obj">config</span>, <span class="obj">formData</span>) => {
+  <span class="obj">console</span>.<span class="fn">log</span>(<span class="str">"Submitted:"</span>, <span class="obj">formData</span>);
+  <span class="fn">showToast</span>(<span class="str">"Saved!"</span>);
+}</code></pre>
+      </div>
+
+      <h3>onFailure</h3>
+      <p>Fires when <code>onSubmit</code> returns <code>{ ok: false }</code> or the built-in fetch gets a non-2xx response.</p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="key">onFailure</span>: (<span class="obj">config</span>, <span class="obj">formData</span>) => {
+  <span class="fn">showErrorBanner</span>(<span class="str">"Submission failed. Try again."</span>);
+}</code></pre>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-title">⚠ Built-in fallback</div>
+        <p>If neither <code>onFailure</code> nor a custom handler suppress the default behavior, the engine calls <code>alert("Failed to submit form.")</code> as a last-resort UX signal.</p>
+      </div>
+    </section>
+
+    <!-- RuntimeModal -->
+    <section class="section" id="runtimemodal">
+      <h2>RuntimeModal</h2>
+      <hr class="section-divider"/>
+      <p><code>RuntimeModal</code> is a thin manager class that injects one <code>&lt;procedural-modal&gt;</code> element into the document and multiplexes any number of named configs through it.</p>
+
+      <h4>constructor()</h4>
+      <p>Creates the custom element and appends it to <code>document.body</code>. Call once at page load.</p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="kw">const</span> <span class="obj">runtime</span> = <span class="kw">new</span> <span class="fn">RuntimeModal</span>();</code></pre>
+      </div>
+
+      <h4>registerModals(configs: object[])</h4>
+      <p>Registers one or more config objects. Can be called multiple times — configs accumulate.</p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="obj">runtime</span>.<span class="fn">registerModals</span>([configA, configB, configC]);</code></pre>
+      </div>
+
+      <h4>openModal(modalName: string)</h4>
+      <p>Looks up the config by <code>modalName</code> and opens the modal. Resets the page index and clears saved form data on every open.</p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="obj">runtime</span>.<span class="fn">openModal</span>(<span class="str">"myModal"</span>);</code></pre>
+      </div>
+
+      <h3>Dragging</h3>
+      <p>The modal header is a drag handle. Click and drag to reposition the dialog anywhere on screen. The modal is clamped to the viewport — it cannot be dragged offscreen.</p>
+    </section>
+
+    <!-- Demo: Simple -->
+    <section class="section" id="demo-simple">
+      <h2>Demo — Simple Form</h2>
+      <hr class="section-divider"/>
+      <p>A single-page modal with three fields and a custom submit handler that logs the payload.</p>
+
+      <div class="demo-box">
+        <p>Click the button below to open a live modal powered by your engine.</p>
+        <div class="demo-buttons">
+          <button class="trigger-btn" onclick="openSimpleModal()">Open Simple Modal</button>
+        </div>
+        <div class="result-box" id="simple-result"></div>
+      </div>
+
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="obj">runtime</span>.<span class="fn">registerModals</span>([{
+  <span class="key">modalName</span>: <span class="str">"contactForm"</span>,
+  <span class="key">title</span>:     <span class="str">"Contact Us"</span>,
+  <span class="key">submitUrl</span>: <span class="str">"/api/contact"</span>,
+  <span class="key">pages</span>: [{
+    <span class="key">title</span>: <span class="str">"Your Details"</span>,
+    <span class="key">fields</span>: [
+      { <span class="key">type</span>: <span class="str">"text"</span>,  <span class="key">name</span>: <span class="str">"name"</span>,    <span class="key">label</span>: <span class="str">"Full Name"</span> },
+      { <span class="key">type</span>: <span class="str">"email"</span>, <span class="key">name</span>: <span class="str">"email"</span>,   <span class="key">label</span>: <span class="str">"Email"</span> },
+      { <span class="key">type</span>: <span class="str">"textarea"</span>, <span class="key">name</span>: <span class="str">"message"</span>, <span class="key">label</span>: <span class="str">"Message"</span> }
+    ]
+  }],
+  <span class="key">onSubmit</span>: <span class="kw">async</span> (cfg, data) => ({ <span class="key">ok</span>: <span class="kw">true</span> }),
+  <span class="key">onSuccess</span>: (cfg, data) => <span class="fn">displayResult</span>(data)
+}]);</code></pre>
+      </div>
+    </section>
+
+    <!-- Demo: Multi-page -->
+    <section class="section" id="demo-multi">
+      <h2>Demo — Multi-Page Wizard</h2>
+      <hr class="section-divider"/>
+      <p>A three-step installation wizard demonstrating page-to-page state persistence. Navigate back and forward — your values are preserved.</p>
+
+      <div class="demo-box">
+        <p>Fill in fields on each step, then navigate back to see your values restored.</p>
+        <div class="demo-buttons">
+          <button class="trigger-btn" onclick="openWizardModal()">Open Installation Wizard</button>
+        </div>
+        <div class="result-box" id="wizard-result"></div>
+      </div>
+
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code>{
+  <span class="key">modalName</span>: <span class="str">"installWizard"</span>,
+  <span class="key">title</span>: <span class="str">"Setup Wizard"</span>,
+  <span class="key">submitUrl</span>: <span class="str">"/api/install"</span>,
+  <span class="key">pages</span>: [
+    {
+      <span class="key">title</span>: <span class="str">"License"</span>,
+      <span class="key">fields</span>: [
+        { <span class="key">type</span>: <span class="str">"text"</span>, <span class="key">name</span>: <span class="str">"licenseKey"</span>,
+          <span class="key">label</span>: <span class="str">"License Key"</span>, <span class="key">tooltip</span>: <span class="str">"Found in your purchase email"</span> },
+        { <span class="key">type</span>: <span class="str">"select"</span>, <span class="key">name</span>: <span class="str">"edition"</span>,
+          <span class="key">label</span>: <span class="str">"Edition"</span>,
+          <span class="key">options</span>: [<span class="str">"Community"</span>, <span class="str">"Professional"</span>, <span class="str">"Enterprise"</span>] }
+      ]
+    },
+    {
+      <span class="key">title</span>: <span class="str">"Configuration"</span>,
+      <span class="key">fields</span>: [
+        { <span class="key">type</span>: <span class="str">"text"</span>, <span class="key">name</span>: <span class="str">"installDir"</span>,
+          <span class="key">label</span>: <span class="str">"Install Directory"</span>,
+          <span class="key">value</span>: <span class="str">"C:\\Program Files\\MyApp"</span> },
+        { <span class="key">type</span>: <span class="str">"select"</span>, <span class="key">name</span>: <span class="str">"language"</span>,
+          <span class="key">label</span>: <span class="str">"Language"</span>,
+          <span class="key">options</span>: [<span class="str">"English"</span>, <span class="str">"Spanish"</span>, <span class="str">"French"</span>, <span class="str">"German"</span>] }
+      ]
+    },
+    {
+      <span class="key">title</span>: <span class="str">"Confirm"</span>,
+      <span class="key">fields</span>: [
+        { <span class="key">type</span>: <span class="str">"textarea"</span>, <span class="key">name</span>: <span class="str">"notes"</span>,
+          <span class="key">label</span>: <span class="str">"Installation Notes (optional)"</span> }
+      ]
+    }
+  ]
+}</code></pre>
+      </div>
+    </section>
+
+    <!-- Demo: Custom Submit -->
+    <section class="section" id="demo-custom">
+      <h2>Demo — Custom Submit Handler</h2>
+      <hr class="section-divider"/>
+      <p>This demo simulates a failed submission to show how <code>onFailure</code> works, then succeeds on retry.</p>
+
+      <div class="demo-box">
+        <p>The first submission attempt will deliberately fail. The second will succeed.</p>
+        <div class="demo-buttons">
+          <button class="trigger-btn green" onclick="openRetryModal()">Open Retry Demo</button>
+        </div>
+        <div class="result-box" id="retry-result"></div>
+      </div>
+
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="kw">let</span> <span class="obj">attempts</span> = <span class="num">0</span>;
+
+{
+  <span class="key">modalName</span>: <span class="str">"retryDemo"</span>,
+  <span class="key">title</span>:     <span class="str">"Retry Demo"</span>,
+  <span class="key">submitUrl</span>: <span class="str">"/api/demo"</span>,
+  <span class="key">pages</span>: [{
+    <span class="key">title</span>: <span class="str">"Submit"</span>,
+    <span class="key">fields</span>: [
+      { <span class="key">type</span>: <span class="str">"text"</span>, <span class="key">name</span>: <span class="str">"value"</span>, <span class="key">label</span>: <span class="str">"Any value"</span> }
+    ]
+  }],
+  <span class="key">onSubmit</span>: <span class="kw">async</span> (cfg, data) => {
+    <span class="obj">attempts</span>++;
+    <span class="kw">return</span> { <span class="key">ok</span>: <span class="obj">attempts</span> > <span class="num">1</span> };  <span class="cmt">// fails first time</span>
+  },
+  <span class="key">onSuccess</span>: (cfg, data) => <span class="fn">showSuccess</span>(data),
+  <span class="key">onFailure</span>: (cfg, data) => <span class="fn">showFailure</span>()
+}</code></pre>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── Inject the modal engine ── -->
+<script>
+class ProceduralModal extends HTMLElement {
+  #installerConfig = null;
+  #isDragging = false;
+  #offsetX = 0;
+  #offsetY = 0;
+  #currentPage = 0;
+  #formDataStore = {};
+  #modalOverlay = null;
+  #modal = null;
+  #modalHeader = null;
+  #modalBody = null;
+  #backBtn = null;
+  #nextBtn = null;
+  #installerForm = null;
+
+  constructor() { super(); }
+
+  connectedCallback() {
+    const shadow = this.attachShadow({ mode: "open" });
+    const stylesheet = document.createElement("style");
+    stylesheet.textContent = `
+      .modal-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+        display: none; align-items: center; justify-content: center; z-index: 1000;
+      }
+      .modal {
+        width: 500px; background: #f0f0f0;
+        border: 1px solid #a0a0a0;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4); position: fixed;
+      }
+      .modal-header {
+        background: linear-gradient(to bottom, #0078d7, #005a9e);
+        color: white; padding: 10px; font-weight: 600;
+        cursor: move; user-select: none;
+        font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 14px;
+      }
+      .modal-body { padding: 20px; background: #f0f0f0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+      .form-group { margin-bottom: 12px; }
+      .form-group label { display: inline-block; font-size: 13px; margin-bottom: 4px; color: #222; }
+      .form-group img { height: 100%; width: 100%; object-fit: contain; }
+      .form-group input, .form-group select, .form-group textarea {
+        width: 100%; padding: 6px; font-size: 13px;
+        border: 1px solid #b5b5b5; border-radius: 2px;
+        box-sizing: border-box; background: #fff; color: #222;
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+      }
+      textarea { resize: vertical; height: 60px; }
+      .modal-footer {
+        background: #f0f0f0; padding: 10px; text-align: right;
+        border-top: 1px solid #d0d0d0;
+      }
+      .btn {
+        min-width: 75px; padding: 6px 12px; font-size: 13px;
+        border: 1px solid #8c8c8c;
+        background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+        cursor: pointer; margin-left: 6px; color: #222;
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+      }
+      .btn:hover { background: linear-gradient(to bottom, #e0e0e0, #f0f0f0); }
+      .btn-primary {
+        border: 1px solid #0b5ed7;
+        background: linear-gradient(to bottom, #4da3ff, #0078d7); color: white;
+      }
+      .btn-primary:hover { background: linear-gradient(to bottom, #66b3ff, #006cc1); }
+      .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; cursor: pointer; }
+      .tooltiptext {
+        visibility: hidden; width: 130px; background-color: black; color: #fff;
+        text-align: center; font-size: 14px; border-radius: 6px; padding: 5px;
+        margin-left: 5px; position: absolute; z-index: 1;
+      }
+      .tooltip:hover + .tooltiptext { visibility: visible; }
+    `;
+
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    const modalHeader = document.createElement("div");
+    modalHeader.className = "modal-header";
+    const form = document.createElement("form");
+    form.method = "POST";
+    const modalBody = document.createElement("div");
+    modalBody.className = "modal-body";
+    const modalFooter = document.createElement("div");
+    modalFooter.className = "modal-footer";
+    const closeButton = document.createElement("button");
+    closeButton.type = "button"; closeButton.className = "btn"; closeButton.textContent = "Close";
+    const backButton = document.createElement("button");
+    backButton.type = "button"; backButton.className = "btn"; backButton.textContent = "Back";
+    const nextButton = document.createElement("button");
+    nextButton.type = "button"; nextButton.className = "btn btn-primary"; nextButton.textContent = "Next";
+
+    modalFooter.append(closeButton, backButton, nextButton);
+    form.append(modalBody);
+    modal.append(modalHeader, form, modalFooter);
+    overlay.append(modal);
+    shadow.append(stylesheet, overlay);
+
+    this.#modalOverlay = overlay; this.#modal = modal; this.#modalHeader = modalHeader;
+    this.#modalBody = modalBody; this.#backBtn = backButton; this.#nextBtn = nextButton;
+    this.#installerForm = form;
+
+    closeButton.addEventListener("click", () => this.closeProceduralModal());
+    backButton.addEventListener("click", () => this.prevPage());
+    nextButton.addEventListener("click", () => this.nextPage());
+
+    modalHeader.addEventListener("mousedown", (e) => {
+      const rect = this.#modal.getBoundingClientRect();
+      this.#modal.style.left = rect.left + "px";
+      this.#modal.style.top = rect.top + "px";
+      this.#modal.style.transform = "none";
+      this.#isDragging = true;
+      this.#offsetX = e.clientX - rect.left;
+      this.#offsetY = e.clientY - rect.top;
+      document.body.style.userSelect = "none";
+    });
+    document.addEventListener("mousemove", (e) => {
+      if (!this.#isDragging) return;
+      let newX = e.clientX - this.#offsetX;
+      let newY = e.clientY - this.#offsetY;
+      const maxX = window.innerWidth - this.#modal.offsetWidth;
+      const maxY = window.innerHeight - this.#modal.offsetHeight;
+      newX = Math.max(0, Math.min(newX, maxX));
+      newY = Math.max(0, Math.min(newY, maxY));
+      this.#modal.style.left = newX + "px";
+      this.#modal.style.top = newY + "px";
+    });
+    document.addEventListener("mouseup", () => {
+      this.#isDragging = false;
+      document.body.style.userSelect = "auto";
+    });
+  }
+
+  openModal(config) {
+    this.#installerConfig = config;
+    this.#modalOverlay.style.display = "flex";
+    this.#installerForm.action = config.submitUrl;
+    this.#modal.style.top = "50%";
+    this.#modal.style.left = "50%";
+    this.#modal.style.transform = "translate(-50%, -50%)";
+    this.#currentPage = 0;
+    this.#formDataStore = {};
+    this.renderPage();
+  }
+
+  closeProceduralModal() { this.#modalOverlay.style.display = "none"; }
+
+  renderPage() {
+    const page = this.#installerConfig.pages[this.#currentPage];
+    this.#modalHeader.textContent = `${this.#installerConfig.title} — ${page.title}`;
+    this.#modalBody.innerHTML = "";
+    page.fields.forEach(field => {
+      const group = document.createElement("div");
+      group.className = "form-group";
+      const label = document.createElement("label");
+      label.textContent = field.label || "";
+      group.appendChild(label);
+      if (field.tooltip) {
+        const tooltip = document.createElement("span");
+        label.classList.add("tooltip");
+        tooltip.classList.add("tooltiptext");
+        tooltip.textContent = field.tooltip;
+        group.appendChild(tooltip);
+      }
+      let input;
+      if (field.type === "textarea") {
+        input = document.createElement("textarea");
+      } else if (field.type === "select") {
+        input = document.createElement("select");
+        field.options.forEach(opt => {
+          const option = document.createElement("option");
+          option.value = opt; option.textContent = opt;
+          input.appendChild(option);
+        });
+      } else if (field.type === "image") {
+        input = document.createElement("img");
+        input.src = field.src; input.alt = field.alt || "";
+      } else {
+        input = document.createElement("input");
+        input.type = field.type || "text";
+      }
+      if (field.name) input.name = field.name;
+      if (field.placeholder) input.placeholder = field.placeholder;
+      if (field.value) input.value = field.value;
+      if (field.name && this.#formDataStore[field.name] !== undefined) {
+        input.value = this.#formDataStore[field.name];
+      }
+      group.appendChild(input);
+      this.#modalBody.appendChild(group);
+    });
+    this.#backBtn.style.display = this.#currentPage === 0 ? "none" : "inline-block";
+    this.#nextBtn.textContent = this.#currentPage === this.#installerConfig.pages.length - 1 ? "Finish" : "Next";
+  }
+
+  saveCurrentPageData() {
+    const inputs = this.#modalBody.querySelectorAll("input, select, textarea");
+    inputs.forEach(input => { if (input.name) this.#formDataStore[input.name] = input.value; });
+  }
+
+  nextPage() {
+    this.saveCurrentPageData();
+    if (this.#currentPage < this.#installerConfig.pages.length - 1) {
+      this.#currentPage++; this.renderPage();
+    } else { this.submitForm(); }
+  }
+
+  prevPage() {
+    this.saveCurrentPageData();
+    if (this.#currentPage > 0) { this.#currentPage--; this.renderPage(); }
+  }
+
+  getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      for (const cookie of document.cookie.split(";")) {
+        const trimmed = cookie.trim();
+        if (trimmed.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(trimmed.slice(name.length + 1)); break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  removeHiddenInputs() {
+    this.#installerForm.querySelectorAll('input[type="hidden"]').forEach(el => el.remove());
+  }
+
+  async submitForm() {
+    this.removeHiddenInputs();
+    for (const [key, value] of Object.entries(this.#formDataStore)) {
+      const hidden = document.createElement("input");
+      hidden.type = "hidden"; hidden.name = key; hidden.value = value;
+      this.#installerForm.appendChild(hidden);
+    }
+    const formData = new FormData(this.#installerForm);
+    const formDataJson = Object.fromEntries(formData.entries());
+    const csrfToken = this.getCookie("csrftoken");
+    let response = null;
+    if (this.#installerConfig.onSubmit) {
+      response = await this.#installerConfig.onSubmit(this.#installerConfig, formDataJson);
+    } else {
+      response = await fetch(this.#installerConfig.submitUrl, {
+        method: this.#installerConfig.method || "POST",
+        mode: "same-origin",
+        headers: { "Content-Type": "application/json; charset=UTF-8", ...(csrfToken && { "X-CSRFToken": csrfToken }) },
+        body: JSON.stringify(formDataJson),
+      });
+    }
+    if (response.ok) {
+      this.closeProceduralModal();
+      if (this.#installerConfig.onSuccess) this.#installerConfig.onSuccess(this.#installerConfig, formDataJson);
+    } else {
+      if (this.#installerConfig.onFailure) this.#installerConfig.onFailure(this.#installerConfig, formDataJson);
+      else alert("Failed to submit form.");
+    }
+  }
+}
+customElements.define("procedural-modal", ProceduralModal);
+
+class RuntimeModal {
+  #privateModals = [];
+  #component;
+  constructor() {
+    this.#component = document.createElement("procedural-modal");
+    document.body.appendChild(this.#component);
+  }
+  registerModals(modals) { this.#privateModals.push(...modals); }
+  openModal(modalName) {
+    const config = this.#privateModals.find(m => m.modalName === modalName);
+    if (!config) { console.error("Modal not found:", modalName); return; }
+    this.#component.openModal(config);
+  }
+}
+
+// ── Demo setup ──
+const runtime = new RuntimeModal();
+
+// Demo 1: Simple contact form
+runtime.registerModals([{
+  modalName: "simpleDemo",
+  title: "Contact Us",
+  submitUrl: "/api/contact",
+  pages: [{
+    title: "Your Details",
+    fields: [
+      { type: "text",     name: "name",    label: "Full Name",    placeholder: "Jane Smith" },
+      { type: "email",    name: "email",   label: "Email Address", placeholder: "jane@example.com" },
+      { type: "select",   name: "subject", label: "Subject",
+        options: ["General Inquiry", "Bug Report", "Feature Request", "Other"] },
+      { type: "textarea", name: "message", label: "Message",      placeholder: "What's on your mind?" }
+    ]
+  }],
+  onSubmit: async (cfg, data) => ({ ok: true }),
+  onSuccess: (cfg, data) => {
+    const el = document.getElementById("simple-result");
+    el.textContent = "✓ Submitted payload:\n" + JSON.stringify(data, null, 2);
+    el.classList.add("visible");
+  }
+}]);
+
+// Demo 2: Multi-page wizard
+runtime.registerModals([{
+  modalName: "wizardDemo",
+  title: "Setup Wizard",
+  submitUrl: "/api/install",
+  pages: [
+    {
+      title: "License",
+      fields: [
+        { type: "text",   name: "licenseKey", label: "License Key",
+          tooltip: "Found in your purchase email", placeholder: "XXXX-XXXX-XXXX-XXXX" },
+        { type: "select", name: "edition",    label: "Edition",
+          options: ["Community", "Professional", "Enterprise"] }
+      ]
+    },
+    {
+      title: "Configuration",
+      fields: [
+        { type: "text",   name: "installDir", label: "Install Directory",
+          value: "C:\\Program Files\\MyApp" },
+        { type: "select", name: "language",   label: "Interface Language",
+          options: ["English", "Spanish", "French", "German", "Japanese"] }
+      ]
+    },
+    {
+      title: "Confirm",
+      fields: [
+        { type: "textarea", name: "notes", label: "Installation Notes (optional)",
+          placeholder: "Any additional notes…" }
+      ]
+    }
+  ],
+  onSubmit: async (cfg, data) => ({ ok: true }),
+  onSuccess: (cfg, data) => {
+    const el = document.getElementById("wizard-result");
+    el.textContent = "✓ Installation config:\n" + JSON.stringify(data, null, 2);
+    el.classList.add("visible");
+  }
+}]);
+
+// Demo 3: Retry demo
+let retryAttempts = 0;
+runtime.registerModals([{
+  modalName: "retryDemo",
+  title: "Retry Demo",
+  submitUrl: "/api/demo",
+  pages: [{
+    title: "Submit",
+    fields: [
+      { type: "text", name: "value", label: "Enter any value", placeholder: "Type something…" }
+    ]
+  }],
+  onSubmit: async (cfg, data) => {
+    retryAttempts++;
+    await new Promise(r => setTimeout(r, 600)); // simulate latency
+    return { ok: retryAttempts % 2 === 0 };     // alternates fail/succeed
+  },
+  onSuccess: (cfg, data) => {
+    retryAttempts = 0;
+    const el = document.getElementById("retry-result");
+    el.textContent = "✓ Success! Payload:\n" + JSON.stringify(data, null, 2);
+    el.classList.add("visible");
+  },
+  onFailure: (cfg, data) => {
+    const el = document.getElementById("retry-result");
+    el.textContent = "✗ Submission failed — open the modal again to retry.";
+    el.classList.add("visible");
+  }
+}]);
+
+function openSimpleModal()  { runtime.openModal("simpleDemo"); }
+function openWizardModal()  { runtime.openModal("wizardDemo"); }
+function openRetryModal()   {
+  retryAttempts = 0;
+  document.getElementById("retry-result").classList.remove("visible");
+  runtime.openModal("retryDemo");
+}
+
+// ── Copy buttons ──
+function copyCode(btn) {
+  const pre = btn.nextElementSibling;
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = "copied!";
+    btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = "copy"; btn.classList.remove("copied"); }, 1800);
+  });
+}
+
+// ── Active nav link on scroll ──
+const sections = document.querySelectorAll("section[id], div[id]");
+const links = document.querySelectorAll(".nav-link");
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove("active"));
+      const match = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+      if (match) match.classList.add("active");
+    }
+  });
+}, { rootMargin: "-30% 0px -60% 0px" });
+
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
