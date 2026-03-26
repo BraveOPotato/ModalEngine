@@ -208,10 +208,12 @@ class ModalEngine extends HTMLElement {
   // Renders a two-column picker: left = selectable items, right = checkboxes.
   // State is stored in this.#formDataStore[field.name] as { itemId: [checkedIds] }.
   //
-  // options can be: { id, label }[]  — static array
-  //                 async (item) => { id, label }[]  — callback, receives the clicked item
-  // Both field.options and item.options support either form.
-  // Resolved results are cached so a callback is only ever called once per item per open.
+  // options can be: { id, label }[]                          — static array
+  //                 async (item) => { id, label }[]              — callback, plain array return
+  //                 async (item) => { options, checked }         — callback with pre-checked state
+  // Both field.options and item.options support all three forms.
+  // Callback-returned checked is applied only when the item has no prior state (no user edits,
+  // no static field.checked). Resolved results are cached per item per open.
   async #renderPane(field) {
     // Seed state: start from saved formDataStore, fall back to field.checked, fall back to empty.
     const state = this.#formDataStore[field.name]
@@ -226,13 +228,30 @@ class ModalEngine extends HTMLElement {
     // Cache of resolved options per item id — avoids re-fetching on re-click.
     const optionsCache = {};
 
-    // Resolves the options for a given item, using cache if available.
+    // Tracks which item ids had their state seeded by the user (not by a callback).
+    // An item is "user-touched" as soon as its state entry existed before the first fetch,
+    // meaning the formDataStore already held a value for it (page revisit) or it was
+    // covered by the static field.checked. Callback-returned checked is only applied
+    // for items whose state is still an empty array at resolution time.
     const resolveItemOptions = async (item) => {
       if (optionsCache[item.id]) return optionsCache[item.id];
       const raw = item.options ?? field.options ?? [];
       const resolved = typeof raw === "function" ? await raw(item) : raw;
-      optionsCache[item.id] = resolved;
-      return resolved;
+
+      // If the callback returned { options, checked } instead of a plain array,
+      // unpack it and seed state — but only if this item hasn't been touched yet
+      // (empty array means neither formDataStore nor static field.checked set it).
+      let opts = resolved;
+      if (!Array.isArray(resolved) && resolved?.options) {
+        opts = resolved.options;
+        if (resolved.checked && state[item.id].length === 0) {
+          state[item.id] = [...resolved.checked];
+          syncSentinel();
+        }
+      }
+
+      optionsCache[item.id] = opts;
+      return opts;
     };
 
     // ── Outer wrapper
