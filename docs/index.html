@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ProceduralModal — Documentation</title>
+<title>ModalEngine — Documentation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Literata:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
@@ -490,6 +490,8 @@
       <div class="nav-group-label">API Reference</div>
       <a href="#config" class="nav-link">Config Object</a>
       <a href="#fields" class="nav-link">Field Types</a>
+      <a href="#dynamic-options" class="nav-link">Dynamic Options</a>
+      <a href="#pane-field" class="nav-link">Pane Field</a>
       <a href="#callbacks" class="nav-link">Callbacks</a>
       <a href="#runtimemodal" class="nav-link">RuntimeModal</a>
 
@@ -497,6 +499,7 @@
       <a href="#demo-simple" class="nav-link">Simple Form</a>
       <a href="#demo-multi" class="nav-link">Multi-Page</a>
       <a href="#demo-custom" class="nav-link">Custom Submit</a>
+      <a href="#pane-field" class="nav-link">Pane Picker</a>
     </nav>
   </aside>
 
@@ -529,7 +532,7 @@
       <h3>Script tag</h3>
       <div class="code-wrap">
         <button class="copy-btn" onclick="copyCode(this)">copy</button>
-        <pre><code><span class="kw">&lt;script</span> <span class="key">src</span>=<span class="str">"https://braveopotato.github.io/ModalEngine/modalengine.min.js"</span> <span class="key">defer</span><span class="kw">&gt;&lt;/script&gt;</span></code></pre>
+        <pre><code><span class="kw">&lt;script</span> <span class="key">src</span>=<span class="str">"procedural-modal.js"</span> <span class="key">defer</span><span class="kw">&gt;&lt;/script&gt;</span></code></pre>
       </div>
 
       <h3>Or inline</h3>
@@ -537,7 +540,7 @@
 
       <div class="callout success">
         <div class="callout-title">✓ Auto-registers</div>
-        <p>The script automatically calls <code>customElements.define("procedural-modal", ProceduralModal)</code>, so the element is available immediately.</p>
+        <p>The script automatically calls <code>customElements.define("procedural-modal", ModalEngine)</code>, so the element is available immediately.</p>
       </div>
     </section>
 
@@ -685,11 +688,15 @@
         </div>
         <div class="field-card">
           <div class="field-card-name">select</div>
-          <p>Renders a <code>&lt;select&gt;</code> dropdown. Requires an <code>options</code> array of strings.</p>
+          <p>Renders a <code>&lt;select&gt;</code> dropdown. <code>options</code> accepts a string array, a <code>{ label: value }</code> object, or an async callback returning either.</p>
         </div>
         <div class="field-card">
           <div class="field-card-name">image</div>
           <p>Renders a full-width <code>&lt;img&gt;</code>. Requires <code>src</code>; optional <code>alt</code>.</p>
+        </div>
+        <div class="field-card">
+          <div class="field-card-name">pane</div>
+          <p>Two-column picker: a clickable item list on the left, a checkbox list on the right. Selection state is tracked per left-item and submitted as a map.</p>
         </div>
       </div>
 
@@ -705,15 +712,179 @@
           <tr><td>placeholder</td><td>string</td><td>Input placeholder text.</td></tr>
           <tr><td>value</td><td>string</td><td>Default value pre-filled in the field.</td></tr>
           <tr><td>tooltip</td><td>string</td><td>Hover tooltip shown on the label. Adds a dotted underline.</td></tr>
-          <tr><td>options</td><td>string[]</td><td>Required for <code>select</code>. List of option values/labels.</td></tr>
+          <tr><td>options</td><td>string[] | object | function</td><td>Required for <code>select</code>. See <a href="#dynamic-options" style="color:var(--accent)">Dynamic Options</a> below for all accepted shapes.</td></tr>
           <tr><td>src</td><td>string</td><td>Image URL. Required for <code>image</code> type.</td></tr>
           <tr><td>alt</td><td>string</td><td>Alt text for <code>image</code> type.</td></tr>
+          <tr><td>items</td><td>{ id, label, options? }[]</td><td>Left-panel list entries. Required for <code>pane</code>. Each item may carry its own <code>options</code> array that overrides the field-level default.</td></tr>
+          <tr><td>options</td><td>varies</td><td>For <code>select</code>: string array, <code>{ label: value }</code> object, or async function. For <code>pane</code>: <code>{ id, label }[]</code> default right-panel entries, used for any item that doesn't declare its own <code>options</code>.</td></tr>
+          <tr><td>checked</td><td>{ [itemId]: id[] }</td><td>Initial checked state for <code>pane</code>. Keys are item ids; values are arrays of pre-checked option ids.</td></tr>
+          <tr><td>leftLabel</td><td>string</td><td>Column header for the left panel. Defaults to <code>"Items"</code>.</td></tr>
+          <tr><td>rightLabel</td><td>string</td><td>Column header for the right panel. Defaults to <code>"Options"</code>.</td></tr>
         </tbody>
       </table>
 
       <div class="callout">
         <div class="callout-title">State persistence</div>
         <p>Values entered on any page are saved when navigating forward or backward. Returning to an earlier page re-populates every field automatically.</p>
+      </div>
+    </section>
+
+    <!-- Dynamic Options -->
+    <section class="section" id="dynamic-options">
+      <h2>Dynamic Options</h2>
+      <hr class="section-divider"/>
+      <p>The <code>options</code> property on a <code>select</code> field accepts three distinct shapes. The engine resolves them at render time, so options can be fetched from an API or computed on the fly.</p>
+
+      <h3>1 — String array <em>(original)</em></h3>
+      <p>Each string is used as both the display label and the submitted value.</p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code>{
+  <span class="key">type</span>: <span class="str">"select"</span>,
+  <span class="key">name</span>: <span class="str">"tier"</span>,
+  <span class="key">label</span>: <span class="str">"Plan"</span>,
+  <span class="key">options</span>: [<span class="str">"Community"</span>, <span class="str">"Professional"</span>, <span class="str">"Enterprise"</span>]
+  <span class="cmt">// submitted value === display label</span>
+}</code></pre>
+      </div>
+
+      <h3>2 — Object <code>{ label: value }</code></h3>
+      <p>Keys are the human-readable labels shown in the dropdown; values are what gets submitted in the form payload. Use this when the display text and the submitted identifier need to differ.</p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code>{
+  <span class="key">type</span>: <span class="str">"select"</span>,
+  <span class="key">name</span>: <span class="str">"countryCode"</span>,
+  <span class="key">label</span>: <span class="str">"Country"</span>,
+  <span class="key">options</span>: {
+    <span class="str">"United States"</span>: <span class="str">"US"</span>,
+    <span class="str">"United Kingdom"</span>: <span class="str">"GB"</span>,
+    <span class="str">"Germany"</span>:        <span class="str">"DE"</span>,
+    <span class="str">"Japan"</span>:          <span class="str">"JP"</span>
+  }
+  <span class="cmt">// user sees "United States", payload contains "US"</span>
+}</code></pre>
+      </div>
+
+      <h3>3 — Async callback</h3>
+      <p>Pass an <code>async</code> function. All callbacks across every page are resolved once when <code>openModal()</code> is called — before the modal appears — and the results are reused for the entire session. The callback must return either a string array or a <code>{ label: value }</code> object.</p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code>{
+  <span class="key">type</span>: <span class="str">"select"</span>,
+  <span class="key">name</span>: <span class="str">"assignee"</span>,
+  <span class="key">label</span>: <span class="str">"Assign To"</span>,
+  <span class="key">options</span>: <span class="kw">async</span> () => {
+    <span class="kw">const</span> <span class="obj">res</span>  = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"/api/users"</span>);
+    <span class="kw">const</span> <span class="obj">data</span> = <span class="kw">await</span> <span class="obj">res</span>.<span class="fn">json</span>();
+    <span class="cmt">// Return array → label === value</span>
+    <span class="kw">return</span> <span class="obj">data</span>.<span class="fn">map</span>(<span class="obj">u</span> => <span class="obj">u</span>.<span class="key">name</span>);
+    <span class="cmt">// — or return object → { "Alice (admin)": "user_1", … }</span>
+  }
+}</code></pre>
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">✓ Called once per open</div>
+        <p>All options callbacks are resolved together when <code>openModal()</code> is called, before the modal appears. Navigating between pages never re-fires a callback — the results are cached for the lifetime of that modal session.</p>
+      </div>
+
+      <div class="demo-box">
+        <p>This demo uses an async callback that simulates a 400 ms API fetch before populating the dropdown.</p>
+        <div class="demo-buttons">
+          <button class="trigger-btn" onclick="openDynamicModal()">Open Dynamic Options Demo</button>
+        </div>
+        <div class="result-box" id="dynamic-result"></div>
+      </div>
+    </section>
+
+    <!-- Pane Field -->
+    <section class="section" id="pane-field">
+      <h2>Pane Field</h2>
+      <hr class="section-divider"/>
+      <p>The <code>pane</code> field type renders a split-panel picker inside the modal body. The left panel lists selectable <strong>items</strong>; clicking one populates the right panel with <strong>checkboxes</strong> whose state is tracked independently per item.</p>
+
+      <p>Each left-panel item can declare its own <code>options</code> array, so different items can expose completely different — or partially overlapping — right-panel choices. A field-level <code>options</code> array serves as the default for items that don't specify their own.</p>
+
+      <p>On submission, the payload contains a JSON-serialised object mapping every item id to the array of checked option ids — including items the user never clicked (they receive an empty array).</p>
+
+      <h3>Config shape</h3>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code>{
+  <span class="key">type</span>:       <span class="str">"pane"</span>,
+  <span class="key">name</span>:       <span class="str">"hostAccess"</span>,
+  <span class="key">label</span>:      <span class="str">"Host Access"</span>,
+  <span class="key">leftLabel</span>:  <span class="str">"Hosts"</span>,
+  <span class="key">rightLabel</span>: <span class="str">"Users"</span>,
+  <span class="key">options</span>: [                           <span class="cmt">// field-level default options</span>
+    { <span class="key">id</span>: <span class="str">"alice"</span>, <span class="key">label</span>: <span class="str">"Alice Chen"</span>   },
+    { <span class="key">id</span>: <span class="str">"bob"</span>,   <span class="key">label</span>: <span class="str">"Bob Martinez"</span> }
+  ],
+  <span class="key">items</span>: [
+    <span class="cmt">// Uses field-level options (Alice + Bob are available)</span>
+    { <span class="key">id</span>: <span class="str">"web-01"</span>, <span class="key">label</span>: <span class="str">"web-01.prod"</span> },
+
+    <span class="cmt">// Overrides with its own options — only Carol + David are available here</span>
+    {
+      <span class="key">id</span>: <span class="str">"db-01"</span>, <span class="key">label</span>: <span class="str">"db-01.prod"</span>,
+      <span class="key">options</span>: [
+        { <span class="key">id</span>: <span class="str">"carol"</span>, <span class="key">label</span>: <span class="str">"Carol Kim"</span>  },
+        { <span class="key">id</span>: <span class="str">"david"</span>, <span class="key">label</span>: <span class="str">"David Osei"</span> }
+      ]
+    }
+  ],
+  <span class="key">checked</span>: {
+    <span class="str">"web-01"</span>: [<span class="str">"alice"</span>],
+    <span class="str">"db-01"</span>:  [<span class="str">"carol"</span>]
+  }
+}</code></pre>
+      </div>
+
+      <h3>Submitted payload</h3>
+      <p>The <code>name</code> key in the form data contains a JSON string. Every item id is present — items the user never visited default to an empty array.</p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="cmt">// formData["hostAccess"] — parsed:</span>
+{
+  <span class="str">"host-1"</span>: [<span class="str">"alice"</span>, <span class="str">"bob"</span>],
+  <span class="str">"host-2"</span>: [],
+  <span class="str">"host-3"</span>: [<span class="str">"carol"</span>]
+}</code></pre>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">State persistence</div>
+        <p>Like all fields, pane state is saved when navigating between pages and fully restored when returning to that page.</p>
+      </div>
+
+      <h3>Use cases</h3>
+      <div class="field-grid">
+        <div class="field-card">
+          <div class="field-card-name">Host → User access</div>
+          <p>Left: hosts. Right: all users. Pre-check the users who already have SSH/sudo access to each host.</p>
+        </div>
+        <div class="field-card">
+          <div class="field-card-name">Group membership</div>
+          <p>Left: groups. Right: all users. Pre-check members who already belong to each group.</p>
+        </div>
+        <div class="field-card">
+          <div class="field-card-name">Role → Permission matrix</div>
+          <p>Left: roles. Right: permissions. Pre-check the permissions already granted to each role.</p>
+        </div>
+        <div class="field-card">
+          <div class="field-card-name">Project → Team members</div>
+          <p>Left: projects. Right: employees. Pre-check the people already assigned to each project.</p>
+        </div>
+      </div>
+
+      <div class="demo-box">
+        <p>The demo below shows a host-access manager. Each host has a different set of users pre-checked. Click a host on the left, then adjust access on the right. Submit to see the full payload.</p>
+        <div class="demo-buttons">
+          <button class="trigger-btn" onclick="openPaneModal()">Open Host Access Manager</button>
+          <button class="trigger-btn green" onclick="openGroupModal()">Open Group Membership Manager</button>
+        </div>
+        <div class="result-box" id="pane-result"></div>
       </div>
     </section>
 
@@ -919,7 +1090,7 @@
 
 <!-- ── Inject the modal engine ── -->
 <script>
-class ProceduralModal extends HTMLElement {
+class ModalEngine extends HTMLElement {
   #installerConfig = null;
   #isDragging = false;
   #offsetX = 0;
@@ -1021,7 +1192,7 @@ class ProceduralModal extends HTMLElement {
     this.#modalBody = modalBody; this.#backBtn = backButton; this.#nextBtn = nextButton;
     this.#installerForm = form;
 
-    closeButton.addEventListener("click", () => this.closeProceduralModal());
+    closeButton.addEventListener("click", () => this.closeModalEngine());
     backButton.addEventListener("click", () => this.prevPage());
     nextButton.addEventListener("click", () => this.nextPage());
 
@@ -1052,7 +1223,7 @@ class ProceduralModal extends HTMLElement {
     });
   }
 
-  openModal(config) {
+  async openModal(config) {
     this.#installerConfig = config;
     this.#modalOverlay.style.display = "flex";
     this.#installerForm.action = config.submitUrl;
@@ -1061,16 +1232,27 @@ class ProceduralModal extends HTMLElement {
     this.#modal.style.transform = "translate(-50%, -50%)";
     this.#currentPage = 0;
     this.#formDataStore = {};
-    this.renderPage();
+    await this.renderPage();
   }
 
-  closeProceduralModal() { this.#modalOverlay.style.display = "none"; }
+  closeModalEngine() { this.#modalOverlay.style.display = "none"; }
 
-  renderPage() {
+  // Normalise select options to { label: value } regardless of input shape.
+  async #resolveOptions(optionsField) {
+    const raw = typeof optionsField === "function" ? await optionsField() : optionsField;
+    if (Array.isArray(raw)) return Object.fromEntries(raw.map(v => [v, v]));
+    return raw; // already { label: value }
+  }
+
+  async renderPage() {
     const page = this.#installerConfig.pages[this.#currentPage];
     this.#modalHeader.textContent = `${this.#installerConfig.title} — ${page.title}`;
     this.#modalBody.innerHTML = "";
-    page.fields.forEach(field => {
+    for (const field of page.fields) {
+      if (field.type === "pane") {
+        this.#renderPane(field);
+        continue;
+      }
       const group = document.createElement("div");
       group.className = "form-group";
       const label = document.createElement("label");
@@ -1088,11 +1270,12 @@ class ProceduralModal extends HTMLElement {
         input = document.createElement("textarea");
       } else if (field.type === "select") {
         input = document.createElement("select");
-        field.options.forEach(opt => {
+        const opts = await this.#resolveOptions(field.options);
+        for (const [lbl, val] of Object.entries(opts)) {
           const option = document.createElement("option");
-          option.value = opt; option.textContent = opt;
+          option.value = val; option.textContent = lbl;
           input.appendChild(option);
-        });
+        }
       } else if (field.type === "image") {
         input = document.createElement("img");
         input.src = field.src; input.alt = field.alt || "";
@@ -1108,9 +1291,120 @@ class ProceduralModal extends HTMLElement {
       }
       group.appendChild(input);
       this.#modalBody.appendChild(group);
-    });
+    }
     this.#backBtn.style.display = this.#currentPage === 0 ? "none" : "inline-block";
     this.#nextBtn.textContent = this.#currentPage === this.#installerConfig.pages.length - 1 ? "Finish" : "Next";
+  }
+
+  // ── Pane field ─────────────────────────────────────────────────────────────
+  // Renders a two-column picker: left = selectable items, right = checkboxes.
+  // State is stored in this.#formDataStore[field.name] as { itemId: [checkedIds] }.
+  #renderPane(field) {
+    // Seed state: start from saved formDataStore, fall back to field.checked, fall back to empty.
+    const state = this.#formDataStore[field.name]
+      ? JSON.parse(this.#formDataStore[field.name])
+      : JSON.parse(JSON.stringify(field.checked || {}));
+
+    // Ensure every item has an entry so unchecked items still appear in payload.
+    field.items.forEach(item => { if (!state[item.id]) state[item.id] = []; });
+
+    let selectedItemId = field.items[0]?.id ?? null;
+
+    // ── Outer wrapper (fills the form-group space)
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "display:flex; flex-direction:column; gap:4px;";
+
+    // Optional label row
+    if (field.label) {
+      const lbl = document.createElement("div");
+      lbl.style.cssText = "font-size:13px; color:#222; margin-bottom:2px;";
+      lbl.textContent = field.label;
+      wrapper.appendChild(lbl);
+    }
+
+    // ── Column headers
+    const headers = document.createElement("div");
+    headers.style.cssText = "display:flex; gap:0; font-size:11px; font-weight:600; color:#555; text-transform:uppercase; letter-spacing:0.06em;";
+    const leftHeader  = document.createElement("div");
+    leftHeader.style.cssText  = "flex:0 0 40%; padding:4px 8px; background:#e0e0e0; border:1px solid #b5b5b5; border-bottom:none;";
+    leftHeader.textContent = field.leftLabel || "Items";
+    const rightHeader = document.createElement("div");
+    rightHeader.style.cssText = "flex:1; padding:4px 8px; background:#e0e0e0; border:1px solid #b5b5b5; border-left:none; border-bottom:none;";
+    rightHeader.textContent = field.rightLabel || "Options";
+    headers.append(leftHeader, rightHeader);
+    wrapper.appendChild(headers);
+
+    // ── Two-panel body
+    const body = document.createElement("div");
+    body.style.cssText = "display:flex; gap:0; border:1px solid #b5b5b5; background:#fff; height:160px;";
+
+    // Left list
+    const leftPanel = document.createElement("div");
+    leftPanel.style.cssText = "flex:0 0 40%; overflow-y:auto; border-right:1px solid #d0d0d0;";
+
+    // Right checklist
+    const rightPanel = document.createElement("div");
+    rightPanel.style.cssText = "flex:1; overflow-y:auto; padding:6px 8px;";
+
+    // Hidden sentinel that holds serialised state for saveCurrentPageData()
+    const sentinel = document.createElement("input");
+    sentinel.type = "hidden";
+    sentinel.name = field.name;
+
+    const syncSentinel = () => { sentinel.value = JSON.stringify(state); };
+    syncSentinel();
+
+    // Renders the right panel for the currently selected left item.
+    // Each item can declare its own options list; field.options is the fallback.
+    const renderRight = (itemId) => {
+      rightPanel.innerHTML = "";
+      const item = field.items.find(i => i.id === itemId);
+      const opts = item?.options ?? field.options ?? [];
+      opts.forEach(opt => {
+        const row = document.createElement("label");
+        row.style.cssText = "display:flex; align-items:center; gap:6px; font-size:12px; padding:3px 0; cursor:pointer; color:#222;";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.value = opt.id;
+        cb.checked = state[itemId]?.includes(opt.id) ?? false;
+        cb.addEventListener("change", () => {
+          if (cb.checked) {
+            if (!state[itemId].includes(opt.id)) state[itemId].push(opt.id);
+          } else {
+            state[itemId] = state[itemId].filter(id => id !== opt.id);
+          }
+          syncSentinel();
+        });
+        row.append(cb, document.createTextNode(opt.label));
+        rightPanel.appendChild(row);
+      });
+    };
+
+    // Renders all left-panel rows, highlighting the active one
+    const renderLeft = () => {
+      leftPanel.innerHTML = "";
+      field.items.forEach(item => {
+        const row = document.createElement("div");
+        const isActive = item.id === selectedItemId;
+        row.style.cssText = `padding:6px 10px; font-size:12px; cursor:pointer; color:#222;
+          background:${isActive ? "#cce4f7" : "transparent"};
+          border-left:3px solid ${isActive ? "#0078d7" : "transparent"};`;
+        row.textContent = item.label;
+        row.addEventListener("click", () => {
+          selectedItemId = item.id;
+          renderLeft();
+          renderRight(item.id);
+        });
+        leftPanel.appendChild(row);
+      });
+    };
+
+    renderLeft();
+    if (selectedItemId) renderRight(selectedItemId);
+
+    body.append(leftPanel, rightPanel);
+    wrapper.append(body, sentinel);
+    this.#modalBody.appendChild(wrapper);
   }
 
   saveCurrentPageData() {
@@ -1118,16 +1412,16 @@ class ProceduralModal extends HTMLElement {
     inputs.forEach(input => { if (input.name) this.#formDataStore[input.name] = input.value; });
   }
 
-  nextPage() {
+  async nextPage() {
     this.saveCurrentPageData();
     if (this.#currentPage < this.#installerConfig.pages.length - 1) {
-      this.#currentPage++; this.renderPage();
+      this.#currentPage++; await this.renderPage();
     } else { this.submitForm(); }
   }
 
-  prevPage() {
+  async prevPage() {
     this.saveCurrentPageData();
-    if (this.#currentPage > 0) { this.#currentPage--; this.renderPage(); }
+    if (this.#currentPage > 0) { this.#currentPage--; await this.renderPage(); }
   }
 
   getCookie(name) {
@@ -1169,7 +1463,7 @@ class ProceduralModal extends HTMLElement {
       });
     }
     if (response.ok) {
-      this.closeProceduralModal();
+      this.closeModalEngine();
       if (this.#installerConfig.onSuccess) this.#installerConfig.onSuccess(this.#installerConfig, formDataJson);
     } else {
       if (this.#installerConfig.onFailure) this.#installerConfig.onFailure(this.#installerConfig, formDataJson);
@@ -1177,7 +1471,7 @@ class ProceduralModal extends HTMLElement {
     }
   }
 }
-customElements.define("procedural-modal", ProceduralModal);
+customElements.define("procedural-modal", ModalEngine);
 
 class RuntimeModal {
   #privateModals = [];
@@ -1290,8 +1584,171 @@ runtime.registerModals([{
   }
 }]);
 
+// Demo 4: Dynamic options (async callback + object)
+runtime.registerModals([{
+  modalName: "dynamicDemo",
+  title: "Dynamic Options",
+  submitUrl: "/api/dynamic",
+  pages: [
+    {
+      title: "Team Assignment",
+      fields: [
+        {
+          type: "select", name: "assignee", label: "Assign To",
+          // Async callback — simulates a 400ms API fetch
+          options: async () => {
+            await new Promise(r => setTimeout(r, 400));
+            return {
+              "Alice Chen (Engineering)":  "user_001",
+              "Bob Martinez (Design)":     "user_002",
+              "Carol Kim (Product)":       "user_003",
+              "David Osei (QA)":           "user_004"
+            };
+          }
+        },
+        {
+          type: "select", name: "priority", label: "Priority",
+          // Plain object — label differs from submitted value
+          options: {
+            "🔴 Critical": "p0",
+            "🟠 High":     "p1",
+            "🟡 Medium":   "p2",
+            "🟢 Low":      "p3"
+          }
+        }
+      ]
+    },
+    {
+      title: "Details",
+      fields: [
+        { type: "text",     name: "title",       label: "Task Title",   placeholder: "Short summary…" },
+        { type: "textarea", name: "description", label: "Description",  placeholder: "What needs doing?" }
+      ]
+    }
+  ],
+  onSubmit: async (cfg, data) => ({ ok: true }),
+  onSuccess: (cfg, data) => {
+    const el = document.getElementById("dynamic-result");
+    el.textContent = "✓ Submitted payload:\n" + JSON.stringify(data, null, 2);
+    el.classList.add("visible");
+  }
+}]);
+
 function openSimpleModal()  { runtime.openModal("simpleDemo"); }
+function openDynamicModal() { runtime.openModal("dynamicDemo"); }
 function openWizardModal()  { runtime.openModal("wizardDemo"); }
+
+// Demo 5: Host access manager (pane field)
+runtime.registerModals([{
+  modalName: "paneHostDemo",
+  title: "Host Access Manager",
+  submitUrl: "/api/access",
+  pages: [{
+    title: "Configure Access",
+    fields: [{
+      type: "pane",
+      name: "hostAccess",
+      label: "Assign users to hosts",
+      leftLabel: "Hosts",
+      rightLabel: "Users",
+      items: [
+        { id: "web-01", label: "web-01.prod" },
+        { id: "web-02", label: "web-02.prod" },
+        { id: "db-01",  label: "db-01.prod"  },
+        { id: "db-02",  label: "db-02.prod"  }
+      ],
+      options: [                        // default: web servers share these users
+        { id: "alice",   label: "Alice Chen"     },
+        { id: "bob",     label: "Bob Martinez"   },
+        { id: "eve",     label: "Eve Larsson"    }
+      ],
+      items: [
+        { id: "web-01", label: "web-01.prod" },  // uses field-level options
+        { id: "web-02", label: "web-02.prod" },  // uses field-level options
+        {
+          id: "db-01", label: "db-01.prod",
+          options: [                             // DB servers: different user pool
+            { id: "carol",  label: "Carol Kim"   },
+            { id: "david",  label: "David Osei"  }
+          ]
+        },
+        {
+          id: "db-02", label: "db-02.prod",
+          options: [
+            { id: "carol",  label: "Carol Kim"   },
+            { id: "david",  label: "David Osei"  }
+          ]
+        }
+      ],
+      checked: {
+        "web-01": ["alice", "bob"],
+        "db-01":  ["carol", "david"],
+        "db-02":  ["david"]
+      }
+    }]
+  }],
+  onSubmit: async (cfg, data) => ({ ok: true }),
+  onSuccess: (cfg, data) => {
+    const el = document.getElementById("pane-result");
+    el.textContent = "✓ hostAccess payload:" + JSON.stringify(JSON.parse(data.hostAccess), null, 2);
+    el.classList.add("visible");
+  }
+}]);
+
+// Demo 6: Group membership manager (pane field)
+runtime.registerModals([{
+  modalName: "paneGroupDemo",
+  title: "Group Membership",
+  submitUrl: "/api/groups",
+  pages: [{
+    title: "Manage Members",
+    fields: [{
+      type: "pane",
+      name: "groupMembers",
+      label: "Assign users to groups",
+      leftLabel: "Groups",
+      rightLabel: "Users",
+      options: [                        // default pool (Engineering + Ops share these)
+        { id: "alice", label: "Alice Chen"   },
+        { id: "bob",   label: "Bob Martinez" },
+        { id: "eve",   label: "Eve Larsson"  }
+      ],
+      items: [
+        { id: "eng",    label: "Engineering" },   // uses field-level options
+        {
+          id: "design", label: "Design",
+          options: [                              // Design has its own roster
+            { id: "carol", label: "Carol Kim"   },
+            { id: "eve",   label: "Eve Larsson" }
+          ]
+        },
+        { id: "ops",    label: "Operations"   },  // uses field-level options
+        {
+          id: "admins", label: "Admins",
+          options: [                              // Admins: only senior members
+            { id: "alice", label: "Alice Chen"   },
+            { id: "david", label: "David Osei"   }
+          ]
+        }
+      ],
+      checked: {
+        "eng":    ["alice", "bob", "eve"],
+        "design": ["carol"],
+        "ops":    ["eve"],
+        "admins": ["alice"]
+      }
+    }]
+  }],
+  onSubmit: async (cfg, data) => ({ ok: true }),
+  onSuccess: (cfg, data) => {
+    const el = document.getElementById("pane-result");
+    el.textContent = "✓ groupMembers payload:" + JSON.stringify(JSON.parse(data.groupMembers), null, 2);
+    el.classList.add("visible");
+  }
+}]);
+
+function openPaneModal()  { document.getElementById("pane-result").classList.remove("visible"); runtime.openModal("paneHostDemo"); }
+function openGroupModal() { document.getElementById("pane-result").classList.remove("visible"); runtime.openModal("paneGroupDemo"); }
 function openRetryModal()   {
   retryAttempts = 0;
   document.getElementById("retry-result").classList.remove("visible");
