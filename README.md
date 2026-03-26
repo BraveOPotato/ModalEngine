@@ -18,7 +18,7 @@ A web component modal that uses JSON config to procedurally update itself. <br>
 ## How to use: (deprecated. Better documentation at: [docs](https://braveopotato.github.io/ModalEngine/))
 1. Add link to the web component in the HTML like so:
 ```html
-<script src="https://raw.githubusercontent.com/BraveOPotato/ModalEngine/refs/heads/main/docs/modalengine.min.js"></script>
+<script src="https://braveopotato.github.io/ModalEngine/modalengine.min.js"></script>
 ```
 2. Then, in the JavaScript, you can simply define the modals and their configs. The following is an example modal:
 
