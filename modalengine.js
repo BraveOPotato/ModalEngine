@@ -16,59 +16,59 @@ class ModalEngine extends HTMLElement {
   constructor() { super(); }
 
   connectedCallback() {
-    const shadow = this.attachShadow({ mode: "open" });
+    // Uses light DOM so page CSS can target procedural-modal .modal-header { } etc.
     const stylesheet = document.createElement("style");
     stylesheet.textContent = `
-      .modal-overlay {
+      procedural-modal .modal-overlay {
         position: fixed; inset: 0; background: rgba(0,0,0,0.4);
         display: none; align-items: center; justify-content: center; z-index: 1000;
       }
-      .modal {
+      procedural-modal .modal {
         width: 500px; background: #f0f0f0;
         border: 1px solid #a0a0a0;
         box-shadow: 0 8px 24px rgba(0,0,0,0.4); position: fixed;
         overflow: hidden;
       }
-      .modal-header {
+      procedural-modal .modal-header {
         background: linear-gradient(to bottom, #0078d7, #005a9e);
         color: white; padding: 10px; font-weight: 600;
         cursor: move; user-select: none;
         font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 14px;
       }
-      .modal-body { padding: 20px; background: #f0f0f0; border-bottom: 1px solid #d0d0d0; font-family: 'Segoe UI', Tahoma, sans-serif; }
-      .form-group { margin-bottom: 12px; }
-      .form-group label { display: inline-block; font-size: 13px; margin-bottom: 4px; color: #222; }
-      .form-group img { height: 100%; width: 100%; object-fit: contain; }
-      .form-group input, .form-group select, .form-group textarea {
+      procedural-modal .modal-body { padding: 20px; background: #f0f0f0; border-bottom: 1px solid #d0d0d0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+      procedural-modal .form-group { margin-bottom: 12px; }
+      procedural-modal .form-group label { display: inline-block; font-size: 13px; margin-bottom: 4px; color: #222; }
+      procedural-modal .form-group img { height: 100%; width: 100%; object-fit: contain; }
+      procedural-modal .form-group input, procedural-modal .form-group select, procedural-modal .form-group textarea {
         width: 100%; padding: 6px; font-size: 13px;
         border: 1px solid #b5b5b5; border-radius: 2px;
         box-sizing: border-box; background: #fff; color: #222;
         font-family: 'Segoe UI', Tahoma, sans-serif;
       }
-      textarea { resize: vertical; height: 60px; }
-      .modal-footer {
+      procedural-modal textarea { resize: vertical; height: 60px; }
+      procedural-modal .modal-footer {
         background: transparent; padding: 10px; text-align: right;
       }
-      .btn {
+      procedural-modal .btn {
         min-width: 75px; padding: 6px 12px; font-size: 13px;
         border: 1px solid #8c8c8c;
         background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
         cursor: pointer; margin-left: 6px; color: #222;
         font-family: 'Segoe UI', Tahoma, sans-serif;
       }
-      .btn:hover { background: linear-gradient(to bottom, #e0e0e0, #f0f0f0); }
-      .btn-primary {
+      procedural-modal .btn:hover { background: linear-gradient(to bottom, #e0e0e0, #f0f0f0); }
+      procedural-modal .btn-primary {
         border: 1px solid #0b5ed7;
         background: linear-gradient(to bottom, #4da3ff, #0078d7); color: white;
       }
-      .btn-primary:hover { background: linear-gradient(to bottom, #66b3ff, #006cc1); }
-      .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; cursor: pointer; }
-      .tooltiptext {
+      procedural-modal .btn-primary:hover { background: linear-gradient(to bottom, #66b3ff, #006cc1); }
+      procedural-modal .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; cursor: pointer; }
+      procedural-modal .tooltiptext {
         visibility: hidden; width: 130px; background-color: black; color: #fff;
         text-align: center; font-size: 14px; border-radius: 6px; padding: 5px;
         margin-left: 5px; position: absolute; z-index: 1;
       }
-      .tooltip:hover + .tooltiptext { visibility: visible; }
+      procedural-modal .tooltip:hover + .tooltiptext { visibility: visible; }
     `;
 
     const overlay = document.createElement("div");
@@ -94,7 +94,7 @@ class ModalEngine extends HTMLElement {
     form.append(modalBody);
     modal.append(modalHeader, form, modalFooter);
     overlay.append(modal);
-    shadow.append(stylesheet, overlay);
+    this.append(stylesheet, overlay);
 
     this.#modalOverlay = overlay; this.#modal = modal; this.#modalHeader = modalHeader;
     this.#modalBody = modalBody; this.#backBtn = backButton; this.#nextBtn = nextButton;

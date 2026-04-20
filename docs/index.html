@@ -501,6 +501,9 @@
       <a href="#demo-custom" class="nav-link">Custom Submit</a>
       <a href="#demo-onnext" class="nav-link">Dynamic Mutation</a>
       <a href="#pane-field" class="nav-link">Pane Picker</a>
+
+      <div class="nav-group-label">Customization</div>
+      <a href="#theming" class="nav-link">Theming</a>
     </nav>
   </aside>
 
@@ -1292,6 +1295,312 @@
         <div class="callout-title">How it works</div>
         <p><code>getModal()</code> returns the config by reference. Assigning a new array to <code>pages[1].fields</code> inside <code>onNext</code> mutates the live config in place. Because the engine reads the page's fields at render time — not at registration time — page 2 always reflects whatever was written during the hook.</p>
       </div>
+    </section>
+
+    <!-- ── Theming ── -->
+    <section class="section" id="theming">
+      <h2>Theming</h2>
+      <hr class="section-divider"/>
+      <p>
+        ModalEngine runs inside a <strong>Shadow DOM</strong>, which means the browser's style
+        cascade stops at the component boundary. External CSS rules like
+        <code>procedural-modal .modal-header { … }</code> have no effect on the internals.
+        There are three ways to apply a custom theme, each with a different trade-off.
+      </p>
+
+      <div class="callout warning">
+        <div class="callout-title">⚠ Shadow DOM isolation</div>
+        <p>
+          The selector <code>procedural-modal { … }</code> targets the <em>host element</em> only —
+          it can set the component's outer box properties (width, position, display) but cannot
+          reach anything inside the shadow root. To style the header, body, inputs, or buttons
+          you must use one of the approaches below.
+        </p>
+      </div>
+
+      <h3>Approach 1 — CSS custom properties (recommended)</h3>
+      <p>
+        The cleanest path is to make the shadow stylesheet consume CSS custom properties defined
+        on the host. Add <code>var()</code> references inside <code>stylesheet.textContent</code>
+        in <code>modalengine.js</code>, then set those properties on <code>procedural-modal</code>
+        from your page CSS. Because CSS custom properties <em>do</em> pierce the shadow boundary,
+        this is the idiomatic Web Components theming contract.
+      </p>
+      <p>
+        The patch below adds four variables to the engine. Once applied, every
+        <code>procedural-modal</code> element on the page becomes independently themeable.
+      </p>
+
+      <h4>Step 1 — patch modalengine.js</h4>
+      <p>
+        Replace the hardcoded colour values inside <code>stylesheet.textContent</code> with
+        <code>var()</code> calls that fall back to the original defaults:
+      </p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="cmt">// Inside connectedCallback(), replace stylesheet.textContent with:</span>
+stylesheet.textContent = <span class="str">`
+  :host {
+    <span class="cmt">/* Declare defaults so the element works without any external CSS */</span>
+    --modal-header-bg:   linear-gradient(to bottom, #0078d7, #005a9e);
+    --modal-header-fg:   white;
+    --modal-body-bg:     #f0f0f0;
+    --modal-border:      #a0a0a0;
+    --modal-input-bg:    #ffffff;
+    --modal-input-fg:    #222222;
+    --modal-btn-primary: linear-gradient(to bottom, #4da3ff, #0078d7);
+    --modal-radius:      0px;
+    --modal-font:        'Segoe UI', Tahoma, sans-serif;
+    --modal-width:       500px;
+  }
+  .modal {
+    width: var(--modal-width); background: var(--modal-body-bg);
+    border: 1px solid var(--modal-border);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); position: fixed;
+    overflow: hidden; border-radius: var(--modal-radius);
+  }
+  .modal-header {
+    background: var(--modal-header-bg);
+    color: var(--modal-header-fg); padding: 10px; font-weight: 600;
+    cursor: move; user-select: none;
+    font-family: var(--modal-font); font-size: 14px;
+  }
+  .modal-body {
+    padding: 20px; background: var(--modal-body-bg);
+    border-bottom: 1px solid var(--modal-border);
+    font-family: var(--modal-font);
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 6px; font-size: 13px;
+    border: 1px solid var(--modal-border); border-radius: calc(var(--modal-radius) / 2);
+    box-sizing: border-box; background: var(--modal-input-bg);
+    color: var(--modal-input-fg); font-family: var(--modal-font);
+  }
+  .btn-primary {
+    border: 1px solid #0b5ed7;
+    background: var(--modal-btn-primary); color: white;
+  }
+  <span class="cmt">/* … rest of stylesheet unchanged … */</span>
+`</span>;</code></pre>
+      </div>
+
+      <h4>Step 2 — set variables in page CSS</h4>
+      <p>
+        Once the engine consumes the variables, each theme is just a CSS rule on the element or a
+        wrapper class. Three examples follow.
+      </p>
+
+      <h3>Theme A — Dark terminal</h3>
+      <p>A dark background with a green accent bar — useful inside developer tooling or admin panels.</p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="cmt">/* Applied globally — every procedural-modal uses this theme */</span>
+<span class="fn">procedural-modal</span> {
+  --modal-header-bg:   <span class="str">#00b86b</span>;
+  --modal-header-fg:   <span class="str">#0a0a0a</span>;
+  --modal-body-bg:     <span class="str">#1a1a1a</span>;
+  --modal-border:      <span class="str">#2e2e2e</span>;
+  --modal-input-bg:    <span class="str">#111111</span>;
+  --modal-input-fg:    <span class="str">#e0e0e0</span>;
+  --modal-btn-primary: <span class="str">linear-gradient(to bottom, #00e07a, #00b86b)</span>;
+  --modal-radius:      <span class="str">4px</span>;
+  --modal-font:        <span class="str">'JetBrains Mono', monospace</span>;
+}
+
+<span class="cmt">/* Override the overlay tint to match */</span>
+<span class="fn">procedural-modal</span>::<span class="fn">part</span>(overlay) {
+  background: <span class="str">rgba(0, 20, 10, 0.7)</span>;
+}</code></pre>
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">Result</div>
+        <p>Black body, monospace fonts, solid green title bar — blends into dark IDEs and terminal-adjacent UIs. The submit button inherits the same green accent automatically through <code>--modal-btn-primary</code>.</p>
+      </div>
+
+      <h3>Theme B — Soft SaaS</h3>
+      <p>Rounded corners, an indigo gradient header, and a white body — matches modern light-mode web apps.</p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="fn">procedural-modal</span>.<span class="fn">theme-saas</span> {
+  --modal-header-bg:   <span class="str">linear-gradient(135deg, #6366f1, #4f46e5)</span>;
+  --modal-header-fg:   <span class="str">#ffffff</span>;
+  --modal-body-bg:     <span class="str">#ffffff</span>;
+  --modal-border:      <span class="str">#e2e8f0</span>;
+  --modal-input-bg:    <span class="str">#f8fafc</span>;
+  --modal-input-fg:    <span class="str">#0f172a</span>;
+  --modal-btn-primary: <span class="str">linear-gradient(135deg, #6366f1, #4f46e5)</span>;
+  --modal-radius:      <span class="str">12px</span>;
+  --modal-width:       <span class="str">520px</span>;
+  --modal-font:        <span class="str">'Inter', system-ui, sans-serif</span>;
+}
+
+<span class="cmt">/* Activate on a specific runtime element */</span>
+<span class="kw">const</span> el = document.querySelector(<span class="str">"procedural-modal"</span>);
+el.classList.add(<span class="str">"theme-saas"</span>);
+
+<span class="cmt">/* — or target a named element with an id ─────────────────────── */</span>
+<span class="fn">#saas-modal</span> {
+  --modal-header-bg: <span class="str">linear-gradient(135deg, #6366f1, #4f46e5)</span>;
+  <span class="cmt">/* … */</span>
+}</code></pre>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">Scoping tip</div>
+        <p>
+          Give each <code>RuntimeModal</code> instance a dedicated <code>&lt;procedural-modal&gt;</code>
+          element and assign it an <code>id</code>. Then each modal can carry its own theme via
+          <code>#my-modal { --modal-header-bg: … }</code> without affecting others on the page.
+        </p>
+      </div>
+
+      <h3>Theme C — Classic Win32</h3>
+      <p>
+        The default engine style is intentionally Win32-like. This snippet sharpens that aesthetic:
+        no border radius, system font, and a classic title bar gradient.
+        Useful for retro tooling, game launchers, or desktop-application wrappers.
+      </p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="fn">procedural-modal</span>.<span class="fn">theme-win32</span> {
+  --modal-header-bg:   <span class="str">linear-gradient(to bottom, #0078d7, #003e87)</span>;
+  --modal-header-fg:   <span class="str">#ffffff</span>;
+  --modal-body-bg:     <span class="str">#ece9d8</span>;       <span class="cmt">/* classic XP silver */</span>
+  --modal-border:      <span class="str">#848484</span>;
+  --modal-input-bg:    <span class="str">#ffffff</span>;
+  --modal-input-fg:    <span class="str">#000000</span>;
+  --modal-btn-primary: <span class="str">linear-gradient(to bottom, #3c8fe8, #1155bb)</span>;
+  --modal-radius:      <span class="str">0px</span>;           <span class="cmt">/* sharp corners */</span>
+  --modal-font:        <span class="str">'Tahoma', 'MS Sans Serif', sans-serif</span>;
+  --modal-width:       <span class="str">460px</span>;
+}</code></pre>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">Box shadow</div>
+        <p>
+          The <code>box-shadow</code> on <code>.modal</code> is not currently exposed as a variable.
+          If you need to change it (e.g. flat shadow for Win32 or a coloured glow for dark themes),
+          add <code>--modal-shadow</code> to the patch in Step 1 and reference it the same way.
+        </p>
+      </div>
+
+      <h3>Approach 2 — Adoptable stylesheets (no engine patch)</h3>
+      <p>
+        If modifying the engine source is off-limits, you can inject a second stylesheet directly
+        into the shadow root via the <code>adoptedStyleSheets</code> API. This requires accessing
+        the component's <code>shadowRoot</code>, which is possible because ModalEngine attaches its
+        shadow in <code>open</code> mode.
+      </p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="kw">const</span> el    = document.querySelector(<span class="str">"procedural-modal"</span>);
+<span class="kw">const</span> sheet = <span class="kw">new</span> <span class="fn">CSSStyleSheet</span>();
+
+sheet.<span class="fn">replaceSync</span>(<span class="str">`
+  .modal-header {
+    background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+    border-radius: 10px 10px 0 0;
+    font-family: 'Inter', sans-serif;
+  }
+  .modal {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 20px 60px rgba(99, 102, 241, 0.35);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+    border-radius: 6px;
+    border: none;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    border-radius: 6px;
+    border-color: #c7d2fe;
+    background: #f8fafc;
+  }
+`</span>);
+
+el.shadowRoot.adoptedStyleSheets = [
+  ...el.shadowRoot.adoptedStyleSheets,
+  sheet
+];</code></pre>
+      </div>
+      <p>
+        The <code>!important</code> declarations are needed because adopted stylesheets share
+        the same cascade layer as the component's internal sheet — specificity alone may not win.
+        Run this code after the element has connected (e.g. in a <code>DOMContentLoaded</code>
+        handler or at the bottom of <code>&lt;body&gt;</code>).
+      </p>
+
+      <div class="callout warning">
+        <div class="callout-title">⚠ Fragility</div>
+        <p>
+          Approach 2 targets class names that are implementation details of the engine.
+          A future version of ModalEngine could rename or restructure them, breaking your
+          overrides silently. The CSS-variable approach (Approach 1) is more stable because
+          it creates an explicit public API contract.
+        </p>
+      </div>
+
+      <h3>Approach 3 — Custom element subclass</h3>
+      <p>
+        For maximum control — different shadow DOM structure, extra animations, custom
+        close-button icon — extend <code>ModalEngine</code> directly and override
+        <code>connectedCallback</code> to inject your own stylesheet before calling
+        <code>super.connectedCallback()</code>. This keeps all the engine logic intact
+        while giving you full ownership of the visual layer.
+      </p>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="kw">class</span> <span class="fn">ThemedModal</span> <span class="kw">extends</span> <span class="fn">ModalEngine</span> {
+  connectedCallback() {
+    <span class="kw">super</span>.<span class="fn">connectedCallback</span>();                 <span class="cmt">// build the shadow DOM first</span>
+    <span class="kw">const</span> extra = document.<span class="fn">createElement</span>(<span class="str">"style"</span>);
+    extra.textContent = <span class="str">`
+      .modal-header {
+        background: #18181b;
+        font-family: 'JetBrains Mono', monospace;
+        letter-spacing: 0.04em;
+        font-size: 12px;
+        text-transform: uppercase;
+        border-bottom: 2px solid #00b86b;
+      }
+      .modal { background: #18181b; border-color: #2e2e2e; }
+      .modal-body { background: #1a1a1a; }
+      .form-group label { color: #6b7a9a; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+      .form-group input, .form-group select, .form-group textarea {
+        background: #111; color: #e0e0e0; border-color: #2e2e2e;
+      }
+      .btn { background: #222; color: #ccc; border-color: #444; }
+      .btn-primary { background: #00b86b; border-color: #00b86b; color: #000; }
+    `</span>;
+    <span class="kw">this</span>.shadowRoot.<span class="fn">appendChild</span>(extra);         <span class="cmt">// appended last = highest precedence</span>
+  }
+}
+customElements.<span class="fn">define</span>(<span class="str">"themed-modal"</span>, <span class="fn">ThemedModal</span>);
+
+<span class="cmt">// Use &lt;themed-modal&gt; instead of &lt;procedural-modal&gt; in RuntimeModal:</span>
+<span class="kw">class</span> <span class="fn">ThemedRuntime</span> <span class="kw">extends</span> <span class="fn">RuntimeModal</span> {
+  constructor() {
+    <span class="kw">super</span>();
+    <span class="cmt">// Replace the default component with the themed one</span>
+    document.body.querySelector(<span class="str">"procedural-modal"</span>)?.remove();
+    <span class="kw">const</span> el = document.<span class="fn">createElement</span>(<span class="str">"themed-modal"</span>);
+    document.body.<span class="fn">appendChild</span>(el);
+  }
+}</code></pre>
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">Best for design systems</div>
+        <p>
+          The subclass approach is ideal when ModalEngine is a dependency and you ship your own
+          design-system package on top. Publish <code>ThemedModal</code> as your own element name,
+          and consumers never need to know ModalEngine exists underneath.
+        </p>
+      </div>
+
     </section>
 
   </main>
