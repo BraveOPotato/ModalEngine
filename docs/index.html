@@ -9,15 +9,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Literata:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
 <style>
   :root {
-    --bg: #0c0c10;
-    --surface: #13131a;
-    --surface2: #1c1c27;
-    --border: #2a2a3d;
-    --accent: #7b6cff;
-    --accent2: #00e5a0;
-    --text: #e8e8f0;
-    --muted: #7070a0;
-    --code-bg: #0a0a12;
+    --bg: #0f1117;
+    --surface: #161b25;
+    --surface2: #1e2537;
+    --border: #2a3348;
+    --accent: #4f83cc;
+    --accent2: #62a07d;
+    --text: #e2e8f0;
+    --muted: #6b7a9a;
+    --code-bg: #0b0e16;
     --win-blue: #0078d7;
     --win-header: linear-gradient(to bottom, #0078d7, #005a9e);
   }
@@ -257,12 +257,12 @@
 
   pre code { background: none; border: none; padding: 0; color: inherit; }
 
-  .kw  { color: #c084fc; }
-  .str { color: #86efac; }
-  .key { color: #7dd3fc; }
-  .num { color: #fbbf24; }
-  .cmt { color: #4a5568; font-style: italic; }
-  .fn  { color: #f9a8d4; }
+  .kw  { color: #93b4e0; }
+  .str { color: #7ec4a0; }
+  .key { color: #80c8e0; }
+  .num { color: #d4a96a; }
+  .cmt { color: #3d4f6b; font-style: italic; }
+  .fn  { color: #c0a0d8; }
   .obj { color: var(--text); }
 
   /* ── Copy button ── */
@@ -457,7 +457,7 @@
     margin-top: 16px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 12.5px;
-    color: #86efac;
+    color: #7ec4a0;
     min-height: 48px;
     white-space: pre-wrap;
     display: none;
@@ -499,6 +499,7 @@
       <a href="#demo-simple" class="nav-link">Simple Form</a>
       <a href="#demo-multi" class="nav-link">Multi-Page</a>
       <a href="#demo-custom" class="nav-link">Custom Submit</a>
+      <a href="#demo-onnext" class="nav-link">onNext Hook</a>
       <a href="#pane-field" class="nav-link">Pane Picker</a>
     </nav>
   </aside>
@@ -666,6 +667,11 @@
             <td>fields</td>
             <td>Field[]</td>
             <td>Array of field descriptor objects rendered on this page.</td>
+          </tr>
+          <tr>
+            <td>onNext</td>
+            <td>async function</td>
+            <td>Optional async hook called when the user clicks <strong>Next</strong> on this page, before advancing. Receives <code>(config, formData)</code>. Use it to validate, log, or mutate page-level data mid-flow. See <a href="#callbacks" style="color:var(--accent)">Callbacks → onNext</a>.</td>
           </tr>
         </tbody>
       </table>
@@ -966,6 +972,80 @@
         <div class="callout-title">⚠ Built-in fallback</div>
         <p>If neither <code>onFailure</code> nor a custom handler suppress the default behavior, the engine calls <code>alert("Failed to submit form.")</code> as a last-resort UX signal.</p>
       </div>
+
+      <h3>onNext <em>(async, per-page)</em></h3>
+      <p>An optional async hook placed on individual <strong>page objects</strong> — not on the top-level config. It fires when the user clicks <strong>Next</strong> on that page, after the current page data is saved but before the engine advances to the next page.</p>
+      <p><strong>Signature:</strong> <code>async (config, formData) =&gt; void</code></p>
+      <p>The engine awaits the promise before moving on, so you can perform any async work — API calls, logging, analytics — and the user will not see the next page until the hook resolves.</p>
+
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code>{
+  <span class="key">modalName</span>: <span class="str">"onboardingFlow"</span>,
+  <span class="key">title</span>:     <span class="str">"Onboarding"</span>,
+  <span class="key">submitUrl</span>: <span class="str">"/api/onboard"</span>,
+  <span class="key">pages</span>: [
+    {
+      <span class="key">title</span>: <span class="str">"Account"</span>,
+      <span class="key">fields</span>: [
+        { <span class="key">type</span>: <span class="str">"text"</span>,  <span class="key">name</span>: <span class="str">"username"</span>, <span class="key">label</span>: <span class="str">"Username"</span> },
+        { <span class="key">type</span>: <span class="str">"email"</span>, <span class="key">name</span>: <span class="str">"email"</span>,    <span class="key">label</span>: <span class="str">"Email"</span>    }
+      ],
+      <span class="cmt">// Called when "Next" is clicked on this page.</span>
+      <span class="cmt">// formData contains all fields collected so far.</span>
+      <span class="key">onNext</span>: <span class="kw">async</span> (<span class="obj">config</span>, <span class="obj">formData</span>) => {
+        <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"/api/analytics/step"</span>, {
+          <span class="key">method</span>: <span class="str">"POST"</span>,
+          <span class="key">body</span>: <span class="obj">JSON</span>.<span class="fn">stringify</span>({ <span class="key">step</span>: <span class="str">"account"</span>, <span class="key">email</span>: <span class="obj">formData</span>.<span class="key">email</span> })
+        });
+      }
+    },
+    {
+      <span class="key">title</span>: <span class="str">"Preferences"</span>,
+      <span class="key">fields</span>: [
+        { <span class="key">type</span>: <span class="str">"select"</span>, <span class="key">name</span>: <span class="str">"plan"</span>, <span class="key">label</span>: <span class="str">"Plan"</span>,
+          <span class="key">options</span>: [<span class="str">"Free"</span>, <span class="str">"Pro"</span>, <span class="str">"Enterprise"</span>] }
+      ]
+      <span class="cmt">// No onNext here — engine advances normally.</span>
+    }
+  ]
+}</code></pre>
+      </div>
+
+      <h4>Common patterns</h4>
+      <table class="api-table">
+        <thead>
+          <tr><th>Use case</th><th>What to do in onNext</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Step analytics</td>
+            <td>Fire a <code>fetch</code> to a tracking endpoint with the current page's data before advancing.</td>
+          </tr>
+          <tr>
+            <td>Server-side pre-validation</td>
+            <td>POST the fields to a validation route; surface an error in the DOM if the server rejects them.</td>
+          </tr>
+          <tr>
+            <td>Draft auto-save</td>
+            <td>Persist intermediate form state to <code>localStorage</code> or a backend so progress isn't lost on reload.</td>
+          </tr>
+          <tr>
+            <td>Conditional routing prep</td>
+            <td>Read <code>formData</code> and mutate the config's subsequent pages (since <code>getModal()</code> returns by reference) before the user sees them.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <div class="callout-title">Execution order</div>
+        <p><code>onNext</code> fires <em>after</em> <code>saveCurrentPageData()</code> and <em>before</em> the page index increments, so <code>formData</code> always contains the complete, up-to-date snapshot of every field the user has touched — including those on earlier pages.</p>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-title">⚠ Errors are not caught automatically</div>
+        <p>If the promise returned by <code>onNext</code> rejects, the engine does not swallow the error — it will propagate to the console. Wrap async work in <code>try/catch</code> if you need to handle failures gracefully without blocking page advancement.</p>
+      </div>
     </section>
 
     <!-- RuntimeModal -->
@@ -1121,6 +1201,70 @@
   },
   <span class="key">onSuccess</span>: (cfg, data) => <span class="fn">showSuccess</span>(data),
   <span class="key">onFailure</span>: (cfg, data) => <span class="fn">showFailure</span>()
+}</code></pre>
+      </div>
+    </section>
+
+    <!-- Demo: onNext Hook -->
+    <section class="section" id="demo-onnext">
+      <h2>Demo — onNext Hook</h2>
+      <hr class="section-divider"/>
+      <p>This three-page wizard attaches an <code>onNext</code> callback to the first two pages. Each callback simulates a 600 ms async operation (an analytics ping or a draft-save) and appends a timestamped log entry to the output below. Advance through the wizard to see the hook fire at each step.</p>
+
+      <div class="demo-box">
+        <p>Open the wizard, fill in fields, and click <strong>Next</strong> on each page to watch <code>onNext</code> execute before the engine advances.</p>
+        <div class="demo-buttons">
+          <button class="trigger-btn" onclick="openOnNextModal()">Open onNext Demo</button>
+        </div>
+        <div class="result-box" id="onnext-result"></div>
+      </div>
+
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code>{
+  <span class="key">modalName</span>: <span class="str">"onNextDemo"</span>,
+  <span class="key">title</span>:     <span class="str">"Onboarding"</span>,
+  <span class="key">submitUrl</span>: <span class="str">"/api/onboard"</span>,
+  <span class="key">pages</span>: [
+    {
+      <span class="key">title</span>: <span class="str">"Account"</span>,
+      <span class="key">fields</span>: [
+        { <span class="key">type</span>: <span class="str">"text"</span>,  <span class="key">name</span>: <span class="str">"username"</span>, <span class="key">label</span>: <span class="str">"Username"</span>     },
+        { <span class="key">type</span>: <span class="str">"email"</span>, <span class="key">name</span>: <span class="str">"email"</span>,    <span class="key">label</span>: <span class="str">"Email Address"</span> }
+      ],
+      <span class="key">onNext</span>: <span class="kw">async</span> (<span class="obj">cfg</span>, <span class="obj">data</span>) => {
+        <span class="cmt">// Simulate an analytics ping (600 ms)</span>
+        <span class="kw">await</span> <span class="kw">new</span> <span class="fn">Promise</span>(<span class="obj">r</span> => <span class="fn">setTimeout</span>(<span class="obj">r</span>, <span class="num">600</span>));
+        <span class="fn">logOnNext</span>(<span class="str">"Step 1 — analytics ping sent"</span>, <span class="obj">data</span>);
+      }
+    },
+    {
+      <span class="key">title</span>: <span class="str">"Preferences"</span>,
+      <span class="key">fields</span>: [
+        { <span class="key">type</span>: <span class="str">"select"</span>, <span class="key">name</span>: <span class="str">"plan"</span>, <span class="key">label</span>: <span class="str">"Plan"</span>,
+          <span class="key">options</span>: [<span class="str">"Free"</span>, <span class="str">"Pro"</span>, <span class="str">"Enterprise"</span>] },
+        { <span class="key">type</span>: <span class="str">"select"</span>, <span class="key">name</span>: <span class="str">"theme"</span>, <span class="key">label</span>: <span class="str">"Interface Theme"</span>,
+          <span class="key">options</span>: [<span class="str">"System"</span>, <span class="str">"Light"</span>, <span class="str">"Dark"</span>] }
+      ],
+      <span class="key">onNext</span>: <span class="kw">async</span> (<span class="obj">cfg</span>, <span class="obj">data</span>) => {
+        <span class="cmt">// Simulate a draft auto-save (600 ms)</span>
+        <span class="kw">await</span> <span class="kw">new</span> <span class="fn">Promise</span>(<span class="obj">r</span> => <span class="fn">setTimeout</span>(<span class="obj">r</span>, <span class="num">600</span>));
+        <span class="fn">logOnNext</span>(<span class="str">"Step 2 — draft saved"</span>, <span class="obj">data</span>);
+      }
+    },
+    {
+      <span class="key">title</span>: <span class="str">"Confirm"</span>,
+      <span class="key">fields</span>: [
+        { <span class="key">type</span>: <span class="str">"textarea"</span>, <span class="key">name</span>: <span class="str">"notes"</span>,
+          <span class="key">label</span>: <span class="str">"Additional Notes (optional)"</span> }
+      ]
+      <span class="cmt">// No onNext — last page submits on Next click.</span>
+    }
+  ],
+  <span class="key">onSubmit</span>: <span class="kw">async</span> (<span class="obj">cfg</span>, <span class="obj">data</span>) => ({ <span class="key">ok</span>: <span class="kw">true</span> }),
+  <span class="key">onSuccess</span>: (<span class="obj">cfg</span>, <span class="obj">data</span>) => {
+    <span class="fn">logOnNext</span>(<span class="str">"✓ Form submitted"</span>, <span class="obj">data</span>);
+  }
 }</code></pre>
       </div>
     </section>
@@ -1498,6 +1642,10 @@ class ModalEngine extends HTMLElement {
   async nextPage() {
     this.saveCurrentPageData();
     if (this.#currentPage < this.#installerConfig.pages.length - 1) {
+      if (this.#installerConfig.pages[this.#currentPage].onNext) {
+        const formDataJson = this.#getJsonData();
+        await this.#installerConfig.pages[this.#currentPage].onNext(this.#installerConfig, formDataJson);
+      }
       this.#currentPage++; await this.renderPage();
     } else { this.submitForm(); }
   }
@@ -1524,7 +1672,7 @@ class ModalEngine extends HTMLElement {
     this.#installerForm.querySelectorAll('input[type="hidden"]').forEach(el => el.remove());
   }
 
-  async submitForm() {
+  #getJsonData() {
     this.removeHiddenInputs();
     for (const [key, value] of Object.entries(this.#formDataStore)) {
       const hidden = document.createElement("input");
@@ -1532,7 +1680,12 @@ class ModalEngine extends HTMLElement {
       this.#installerForm.appendChild(hidden);
     }
     const formData = new FormData(this.#installerForm);
-    const formDataJson = Object.fromEntries(formData.entries());
+    return Object.fromEntries(formData.entries());
+  }
+
+  async submitForm() {
+    this.removeHiddenInputs();
+    const formDataJson = this.#getJsonData();
     const csrfToken = this.getCookie("csrftoken");
     let response = null;
     if (this.#installerConfig.onSubmit) {
@@ -1856,6 +2009,64 @@ function openRetryModal()   {
   retryAttempts = 0;
   document.getElementById("retry-result").classList.remove("visible");
   runtime.openModal("retryDemo");
+}
+
+// ── onNext log helper ──
+function logOnNext(label, data) {
+  const el = document.getElementById("onnext-result");
+  el.classList.add("visible");
+  const ts = new Date().toLocaleTimeString();
+  el.textContent += `[${ts}] ${label}\n         data snapshot: ${JSON.stringify(data)}\n\n`;
+}
+
+// Demo 7: onNext hook demo
+runtime.registerModals([{
+  modalName: "onNextDemo",
+  title: "Onboarding",
+  submitUrl: "/api/onboard",
+  pages: [
+    {
+      title: "Account",
+      fields: [
+        { type: "text",  name: "username", label: "Username",     placeholder: "jane_smith" },
+        { type: "email", name: "email",    label: "Email Address", placeholder: "jane@example.com" }
+      ],
+      onNext: async (cfg, data) => {
+        await new Promise(r => setTimeout(r, 600));
+        logOnNext("Step 1 → analytics ping sent", data);
+      }
+    },
+    {
+      title: "Preferences",
+      fields: [
+        { type: "select", name: "plan",  label: "Plan",
+          options: ["Free", "Pro", "Enterprise"] },
+        { type: "select", name: "theme", label: "Interface Theme",
+          options: ["System", "Light", "Dark"] }
+      ],
+      onNext: async (cfg, data) => {
+        await new Promise(r => setTimeout(r, 600));
+        logOnNext("Step 2 → draft auto-saved", data);
+      }
+    },
+    {
+      title: "Confirm",
+      fields: [
+        { type: "textarea", name: "notes", label: "Additional Notes (optional)",
+          placeholder: "Anything we should know…" }
+      ]
+    }
+  ],
+  onSubmit: async (cfg, data) => ({ ok: true }),
+  onSuccess: (cfg, data) => {
+    logOnNext("✓ Form submitted successfully", data);
+  }
+}]);
+
+function openOnNextModal() {
+  document.getElementById("onnext-result").textContent = "";
+  document.getElementById("onnext-result").classList.remove("visible");
+  runtime.openModal("onNextDemo");
 }
 
 // ── Copy buttons ──
