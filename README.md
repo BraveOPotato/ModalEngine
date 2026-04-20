@@ -6,7 +6,7 @@ A web component modal that uses JSON config to procedurally update itself. <br>
 * Easy setup of multiple modals
 * Easy setup of mulitple pages per modal
 * Easy to implement into existing codebase
-* Small footprint: ~10Kb
+* Small footprint: ~10Kb (<4Kb compressed)
 * Optional callback on success
 
 ## What it looks like:
