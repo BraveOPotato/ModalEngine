@@ -520,7 +520,7 @@
       </p>
       <div class="hero-badges">
         <span class="badge accent">Zero dependencies</span>
-        <span class="badge green">Shadow DOM isolated</span>
+        <span class="badge green">CSS themeable</span>
         <span class="badge">Draggable</span>
         <span class="badge">Multi-page</span>
         <span class="badge">Custom callbacks</span>
@@ -1301,305 +1301,287 @@
     <section class="section" id="theming">
       <h2>Theming</h2>
       <hr class="section-divider"/>
+
       <p>
-        ModalEngine runs inside a <strong>Shadow DOM</strong>, which means the browser's style
-        cascade stops at the component boundary. External CSS rules like
-        <code>procedural-modal .modal-header { … }</code> have no effect on the internals.
-        There are three ways to apply a custom theme, each with a different trade-off.
+        ModalEngine uses <strong>light DOM</strong> — its internal elements live in the regular
+        document tree, not a Shadow DOM. This means you can style every part of the modal directly
+        from your page stylesheet using the <code>procedural-modal</code> element as a scope prefix.
       </p>
 
-      <div class="callout warning">
-        <div class="callout-title">⚠ Shadow DOM isolation</div>
-        <p>
-          The selector <code>procedural-modal { … }</code> targets the <em>host element</em> only —
-          it can set the component's outer box properties (width, position, display) but cannot
-          reach anything inside the shadow root. To style the header, body, inputs, or buttons
-          you must use one of the approaches below.
-        </p>
-      </div>
-
-      <h3>Approach 1 — CSS custom properties (recommended)</h3>
-      <p>
-        The cleanest path is to make the shadow stylesheet consume CSS custom properties defined
-        on the host. Add <code>var()</code> references inside <code>stylesheet.textContent</code>
-        in <code>modalengine.js</code>, then set those properties on <code>procedural-modal</code>
-        from your page CSS. Because CSS custom properties <em>do</em> pierce the shadow boundary,
-        this is the idiomatic Web Components theming contract.
-      </p>
-      <p>
-        The patch below adds four variables to the engine. Once applied, every
-        <code>procedural-modal</code> element on the page becomes independently themeable.
-      </p>
-
-      <h4>Step 1 — patch modalengine.js</h4>
-      <p>
-        Replace the hardcoded colour values inside <code>stylesheet.textContent</code> with
-        <code>var()</code> calls that fall back to the original defaults:
-      </p>
       <div class="code-wrap">
         <button class="copy-btn" onclick="copyCode(this)">copy</button>
-        <pre><code><span class="cmt">// Inside connectedCallback(), replace stylesheet.textContent with:</span>
-stylesheet.textContent = <span class="str">`
-  :host {
-    <span class="cmt">/* Declare defaults so the element works without any external CSS */</span>
-    --modal-header-bg:   linear-gradient(to bottom, #0078d7, #005a9e);
-    --modal-header-fg:   white;
-    --modal-body-bg:     #f0f0f0;
-    --modal-border:      #a0a0a0;
-    --modal-input-bg:    #ffffff;
-    --modal-input-fg:    #222222;
-    --modal-btn-primary: linear-gradient(to bottom, #4da3ff, #0078d7);
-    --modal-radius:      0px;
-    --modal-font:        'Segoe UI', Tahoma, sans-serif;
-    --modal-width:       500px;
-  }
-  .modal {
-    width: var(--modal-width); background: var(--modal-body-bg);
-    border: 1px solid var(--modal-border);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4); position: fixed;
-    overflow: hidden; border-radius: var(--modal-radius);
-  }
-  .modal-header {
-    background: var(--modal-header-bg);
-    color: var(--modal-header-fg); padding: 10px; font-weight: 600;
-    cursor: move; user-select: none;
-    font-family: var(--modal-font); font-size: 14px;
-  }
-  .modal-body {
-    padding: 20px; background: var(--modal-body-bg);
-    border-bottom: 1px solid var(--modal-border);
-    font-family: var(--modal-font);
-  }
-  .form-group input, .form-group select, .form-group textarea {
-    width: 100%; padding: 6px; font-size: 13px;
-    border: 1px solid var(--modal-border); border-radius: calc(var(--modal-radius) / 2);
-    box-sizing: border-box; background: var(--modal-input-bg);
-    color: var(--modal-input-fg); font-family: var(--modal-font);
-  }
-  .btn-primary {
-    border: 1px solid #0b5ed7;
-    background: var(--modal-btn-primary); color: white;
-  }
-  <span class="cmt">/* … rest of stylesheet unchanged … */</span>
-`</span>;</code></pre>
+        <pre><code><span class="cmt">/* Add to your existing &lt;style&gt; block — no JS, no engine changes needed */</span>
+
+<span class="fn">procedural-modal</span> .<span class="fn">modal-header</span> { <span class="cmt">/* title bar */</span> }
+<span class="fn">procedural-modal</span> .<span class="fn">modal-body</span>   { <span class="cmt">/* form area */</span> }
+<span class="fn">procedural-modal</span> .<span class="fn">modal-footer</span> { <span class="cmt">/* button row */</span> }
+<span class="fn">procedural-modal</span> .<span class="fn">modal</span>        { <span class="cmt">/* outer window chrome */</span> }
+<span class="fn">procedural-modal</span> .<span class="fn">btn</span>          { <span class="cmt">/* Close / Back buttons */</span> }
+<span class="fn">procedural-modal</span> .<span class="fn">btn-primary</span>  { <span class="cmt">/* Next / Finish button */</span> }
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">label</span>    { <span class="cmt">/* field labels */</span> }
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">input</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">select</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">textarea</span> { <span class="cmt">/* all input controls */</span> }</code></pre>
       </div>
 
-      <h4>Step 2 — set variables in page CSS</h4>
-      <p>
-        Once the engine consumes the variables, each theme is just a CSS rule on the element or a
-        wrapper class. Three examples follow.
-      </p>
+      <p>The three themes below show what's possible. Each is self-contained CSS you can paste straight into your stylesheet.</p>
 
-      <h3>Theme A — Dark terminal</h3>
-      <p>A dark background with a green accent bar — useful inside developer tooling or admin panels.</p>
+      <!-- ── Theme previews ── -->
+      <style>
+        .theme-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin: 28px 0 12px; }
+        .theme-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .theme-card-label { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 14px 10px; color: var(--muted); border-bottom: 1px solid var(--border); }
+
+        /* ── shared mock-modal chrome ── */
+        .mock-modal-wrap { padding: 16px; display: flex; justify-content: center; }
+        .mock-modal { width: 100%; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; border: 1px solid #a0a0a0; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
+        .mock-header { padding: 8px 10px; font-weight: 600; font-size: 12px; color: white; background: linear-gradient(to bottom, #0078d7, #005a9e); }
+        .mock-body   { padding: 14px; background: #f0f0f0; }
+        .mock-footer { padding: 8px 10px; text-align: right; background: transparent; }
+        .mock-field  { margin-bottom: 10px; }
+        .mock-label  { display: block; font-size: 11px; margin-bottom: 3px; color: #222; }
+        .mock-input  { width: 100%; padding: 4px 6px; font-size: 11px; border: 1px solid #b5b5b5; border-radius: 2px; background: #fff; color: #222; box-sizing: border-box; font-family: inherit; }
+        .mock-btn    { display: inline-block; min-width: 58px; padding: 4px 10px; font-size: 11px; border: 1px solid #8c8c8c; background: linear-gradient(to bottom, #f0f0f0, #e0e0e0); color: #222; margin-left: 5px; cursor: default; }
+        .mock-btn-p  { display: inline-block; min-width: 58px; padding: 4px 10px; font-size: 11px; border: 1px solid #0b5ed7; background: linear-gradient(to bottom, #4da3ff, #0078d7); color: white; margin-left: 5px; cursor: default; }
+
+        /* ── Theme A: Dark Terminal ── */
+        .mock-modal.terminal  { border-color: #2e2e2e; font-family: 'JetBrains Mono', monospace; }
+        .mock-modal.terminal .mock-header { background: #00b86b; color: #0a0a0a; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.05em; }
+        .mock-modal.terminal .mock-body   { background: #1a1a1a; border-top: none; }
+        .mock-modal.terminal .mock-footer { background: #1a1a1a; }
+        .mock-modal.terminal .mock-label  { color: #4a9e6a; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+        .mock-modal.terminal .mock-input  { background: #111; color: #d0ffd0; border-color: #2e2e2e; border-radius: 2px; font-family: 'JetBrains Mono', monospace; }
+        .mock-modal.terminal .mock-btn    { background: #222; color: #aaa; border-color: #444; font-family: 'JetBrains Mono', monospace; }
+        .mock-modal.terminal .mock-btn-p  { background: #00b86b; border-color: #00b86b; color: #000; font-family: 'JetBrains Mono', monospace; }
+
+        /* ── Theme B: Soft SaaS ── */
+        .mock-modal.saas  { border-color: #e2e8f0; border-radius: 12px; font-family: 'Inter', system-ui, sans-serif; box-shadow: 0 8px 30px rgba(99,102,241,0.2); }
+        .mock-modal.saas .mock-header { background: linear-gradient(135deg, #6366f1, #4f46e5); border-radius: 11px 11px 0 0; font-family: 'Inter', sans-serif; }
+        .mock-modal.saas .mock-body   { background: #fff; }
+        .mock-modal.saas .mock-footer { background: #fff; border-top: 1px solid #e2e8f0; }
+        .mock-modal.saas .mock-label  { color: #64748b; font-family: 'Inter', sans-serif; }
+        .mock-modal.saas .mock-input  { background: #f8fafc; color: #0f172a; border-color: #c7d2fe; border-radius: 6px; font-family: 'Inter', sans-serif; }
+        .mock-modal.saas .mock-btn    { background: #f1f5f9; color: #475569; border-color: #e2e8f0; border-radius: 6px; font-family: 'Inter', sans-serif; }
+        .mock-modal.saas .mock-btn-p  { background: linear-gradient(135deg, #6366f1, #4f46e5); border-color: #4f46e5; border-radius: 6px; font-family: 'Inter', sans-serif; }
+
+        /* ── Theme C: Warm Sepia ── */
+        .mock-modal.sepia  { border-color: #c4a882; font-family: 'Georgia', serif; }
+        .mock-modal.sepia .mock-header { background: linear-gradient(to bottom, #8b6a3e, #6b4f2e); font-family: 'Georgia', serif; letter-spacing: 0.02em; }
+        .mock-modal.sepia .mock-body   { background: #fdf6ec; }
+        .mock-modal.sepia .mock-footer { background: #fdf6ec; border-top: 1px solid #e8d5b7; }
+        .mock-modal.sepia .mock-label  { color: #6b4f2e; font-family: 'Georgia', serif; font-style: italic; }
+        .mock-modal.sepia .mock-input  { background: #fffaf3; color: #3d2b1a; border-color: #c4a882; border-radius: 2px; font-family: 'Georgia', serif; }
+        .mock-modal.sepia .mock-btn    { background: linear-gradient(to bottom, #f5e6cf, #e8d5b7); color: #5a3e28; border-color: #c4a882; font-family: 'Georgia', serif; }
+        .mock-modal.sepia .mock-btn-p  { background: linear-gradient(to bottom, #a0703a, #8b5e2e); border-color: #7a4f24; font-family: 'Georgia', serif; }
+      </style>
+
+      <div class="theme-gallery">
+
+        <!-- Default -->
+        <div class="theme-card">
+          <div class="theme-card-label">Default (Win32)</div>
+          <div class="mock-modal-wrap">
+            <div class="mock-modal">
+              <div class="mock-header">My App — Settings</div>
+              <div class="mock-body">
+                <div class="mock-field"><label class="mock-label">Username</label><input class="mock-input" value="jdoe" readonly/></div>
+                <div class="mock-field"><label class="mock-label">Email</label><input class="mock-input" value="j@example.com" readonly/></div>
+              </div>
+              <div class="mock-footer"><span class="mock-btn">Close</span><span class="mock-btn-p">Next</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terminal -->
+        <div class="theme-card">
+          <div class="theme-card-label">Dark Terminal</div>
+          <div class="mock-modal-wrap">
+            <div class="mock-modal terminal">
+              <div class="mock-header">My App — Settings</div>
+              <div class="mock-body">
+                <div class="mock-field"><label class="mock-label">Username</label><input class="mock-input" value="jdoe" readonly/></div>
+                <div class="mock-field"><label class="mock-label">Email</label><input class="mock-input" value="j@example.com" readonly/></div>
+              </div>
+              <div class="mock-footer"><span class="mock-btn">Close</span><span class="mock-btn-p">Next</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SaaS -->
+        <div class="theme-card">
+          <div class="theme-card-label">Soft SaaS</div>
+          <div class="mock-modal-wrap">
+            <div class="mock-modal saas">
+              <div class="mock-header">My App — Settings</div>
+              <div class="mock-body">
+                <div class="mock-field"><label class="mock-label">Username</label><input class="mock-input" value="jdoe" readonly/></div>
+                <div class="mock-field"><label class="mock-label">Email</label><input class="mock-input" value="j@example.com" readonly/></div>
+              </div>
+              <div class="mock-footer"><span class="mock-btn">Close</span><span class="mock-btn-p">Next</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sepia: spans full width row below -->
+
+      </div><!-- /.theme-gallery -->
+
+      <!-- Sepia full-width preview -->
+      <div class="theme-card" style="margin-bottom: 32px;">
+        <div class="theme-card-label">Warm Sepia</div>
+        <div class="mock-modal-wrap">
+          <div class="mock-modal sepia" style="max-width: 340px;">
+            <div class="mock-header">My App — Settings</div>
+            <div class="mock-body">
+              <div class="mock-field"><label class="mock-label">Username</label><input class="mock-input" value="jdoe" readonly/></div>
+              <div class="mock-field"><label class="mock-label">Email</label><input class="mock-input" value="j@example.com" readonly/></div>
+            </div>
+            <div class="mock-footer"><span class="mock-btn">Close</span><span class="mock-btn-p">Next</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Per-theme CSS ── -->
+
+      <h3>Theme A — Dark Terminal</h3>
       <div class="code-wrap">
         <button class="copy-btn" onclick="copyCode(this)">copy</button>
-        <pre><code><span class="cmt">/* Applied globally — every procedural-modal uses this theme */</span>
-<span class="fn">procedural-modal</span> {
-  --modal-header-bg:   <span class="str">#00b86b</span>;
-  --modal-header-fg:   <span class="str">#0a0a0a</span>;
-  --modal-body-bg:     <span class="str">#1a1a1a</span>;
-  --modal-border:      <span class="str">#2e2e2e</span>;
-  --modal-input-bg:    <span class="str">#111111</span>;
-  --modal-input-fg:    <span class="str">#e0e0e0</span>;
-  --modal-btn-primary: <span class="str">linear-gradient(to bottom, #00e07a, #00b86b)</span>;
-  --modal-radius:      <span class="str">4px</span>;
-  --modal-font:        <span class="str">'JetBrains Mono', monospace</span>;
+        <pre><code><span class="fn">procedural-modal</span> .<span class="fn">modal</span> {
+  border-color: <span class="str">#2e2e2e</span>;
 }
-
-<span class="cmt">/* Override the overlay tint to match */</span>
-<span class="fn">procedural-modal</span>::<span class="fn">part</span>(overlay) {
-  background: <span class="str">rgba(0, 20, 10, 0.7)</span>;
+<span class="fn">procedural-modal</span> .<span class="fn">modal-header</span> {
+  background: <span class="str">#00b86b</span>;
+  color: <span class="str">#0a0a0a</span>;
+  font-family: <span class="str">'JetBrains Mono', monospace</span>;
+  font-size: <span class="str">11px</span>;
+  letter-spacing: <span class="str">0.05em</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">modal-body</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">modal-footer</span> {
+  background: <span class="str">#1a1a1a</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">label</span> {
+  color: <span class="str">#4a9e6a</span>;
+  font-size: <span class="str">10px</span>;
+  letter-spacing: <span class="str">0.06em</span>;
+  text-transform: <span class="str">uppercase</span>;
+  font-family: <span class="str">'JetBrains Mono', monospace</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">input</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">select</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">textarea</span> {
+  background: <span class="str">#111</span>;
+  color: <span class="str">#d0ffd0</span>;
+  border-color: <span class="str">#2e2e2e</span>;
+  font-family: <span class="str">'JetBrains Mono', monospace</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn</span> {
+  background: <span class="str">#222</span>;
+  color: <span class="str">#aaa</span>;
+  border-color: <span class="str">#444</span>;
+  font-family: <span class="str">'JetBrains Mono', monospace</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn-primary</span> {
+  background: <span class="str">#00b86b</span>;
+  border-color: <span class="str">#00b86b</span>;
+  color: <span class="str">#000</span>;
+  font-family: <span class="str">'JetBrains Mono', monospace</span>;
 }</code></pre>
-      </div>
-
-      <div class="callout success">
-        <div class="callout-title">Result</div>
-        <p>Black body, monospace fonts, solid green title bar — blends into dark IDEs and terminal-adjacent UIs. The submit button inherits the same green accent automatically through <code>--modal-btn-primary</code>.</p>
       </div>
 
       <h3>Theme B — Soft SaaS</h3>
-      <p>Rounded corners, an indigo gradient header, and a white body — matches modern light-mode web apps.</p>
       <div class="code-wrap">
         <button class="copy-btn" onclick="copyCode(this)">copy</button>
-        <pre><code><span class="fn">procedural-modal</span>.<span class="fn">theme-saas</span> {
-  --modal-header-bg:   <span class="str">linear-gradient(135deg, #6366f1, #4f46e5)</span>;
-  --modal-header-fg:   <span class="str">#ffffff</span>;
-  --modal-body-bg:     <span class="str">#ffffff</span>;
-  --modal-border:      <span class="str">#e2e8f0</span>;
-  --modal-input-bg:    <span class="str">#f8fafc</span>;
-  --modal-input-fg:    <span class="str">#0f172a</span>;
-  --modal-btn-primary: <span class="str">linear-gradient(135deg, #6366f1, #4f46e5)</span>;
-  --modal-radius:      <span class="str">12px</span>;
-  --modal-width:       <span class="str">520px</span>;
-  --modal-font:        <span class="str">'Inter', system-ui, sans-serif</span>;
+        <pre><code><span class="fn">procedural-modal</span> .<span class="fn">modal</span> {
+  border-color: <span class="str">#e2e8f0</span>;
+  border-radius: <span class="str">12px</span>;
+  box-shadow: <span class="str">0 8px 30px rgba(99, 102, 241, 0.2)</span>;
+  overflow: <span class="str">hidden</span>;
+  font-family: <span class="str">'Inter', system-ui, sans-serif</span>;
 }
-
-<span class="cmt">/* Activate on a specific runtime element */</span>
-<span class="kw">const</span> el = document.querySelector(<span class="str">"procedural-modal"</span>);
-el.classList.add(<span class="str">"theme-saas"</span>);
-
-<span class="cmt">/* — or target a named element with an id ─────────────────────── */</span>
-<span class="fn">#saas-modal</span> {
-  --modal-header-bg: <span class="str">linear-gradient(135deg, #6366f1, #4f46e5)</span>;
-  <span class="cmt">/* … */</span>
-}</code></pre>
-      </div>
-
-      <div class="callout">
-        <div class="callout-title">Scoping tip</div>
-        <p>
-          Give each <code>RuntimeModal</code> instance a dedicated <code>&lt;procedural-modal&gt;</code>
-          element and assign it an <code>id</code>. Then each modal can carry its own theme via
-          <code>#my-modal { --modal-header-bg: … }</code> without affecting others on the page.
-        </p>
-      </div>
-
-      <h3>Theme C — Classic Win32</h3>
-      <p>
-        The default engine style is intentionally Win32-like. This snippet sharpens that aesthetic:
-        no border radius, system font, and a classic title bar gradient.
-        Useful for retro tooling, game launchers, or desktop-application wrappers.
-      </p>
-      <div class="code-wrap">
-        <button class="copy-btn" onclick="copyCode(this)">copy</button>
-        <pre><code><span class="fn">procedural-modal</span>.<span class="fn">theme-win32</span> {
-  --modal-header-bg:   <span class="str">linear-gradient(to bottom, #0078d7, #003e87)</span>;
-  --modal-header-fg:   <span class="str">#ffffff</span>;
-  --modal-body-bg:     <span class="str">#ece9d8</span>;       <span class="cmt">/* classic XP silver */</span>
-  --modal-border:      <span class="str">#848484</span>;
-  --modal-input-bg:    <span class="str">#ffffff</span>;
-  --modal-input-fg:    <span class="str">#000000</span>;
-  --modal-btn-primary: <span class="str">linear-gradient(to bottom, #3c8fe8, #1155bb)</span>;
-  --modal-radius:      <span class="str">0px</span>;           <span class="cmt">/* sharp corners */</span>
-  --modal-font:        <span class="str">'Tahoma', 'MS Sans Serif', sans-serif</span>;
-  --modal-width:       <span class="str">460px</span>;
-}</code></pre>
-      </div>
-
-      <div class="callout">
-        <div class="callout-title">Box shadow</div>
-        <p>
-          The <code>box-shadow</code> on <code>.modal</code> is not currently exposed as a variable.
-          If you need to change it (e.g. flat shadow for Win32 or a coloured glow for dark themes),
-          add <code>--modal-shadow</code> to the patch in Step 1 and reference it the same way.
-        </p>
-      </div>
-
-      <h3>Approach 2 — Adoptable stylesheets (no engine patch)</h3>
-      <p>
-        If modifying the engine source is off-limits, you can inject a second stylesheet directly
-        into the shadow root via the <code>adoptedStyleSheets</code> API. This requires accessing
-        the component's <code>shadowRoot</code>, which is possible because ModalEngine attaches its
-        shadow in <code>open</code> mode.
-      </p>
-      <div class="code-wrap">
-        <button class="copy-btn" onclick="copyCode(this)">copy</button>
-        <pre><code><span class="kw">const</span> el    = document.querySelector(<span class="str">"procedural-modal"</span>);
-<span class="kw">const</span> sheet = <span class="kw">new</span> <span class="fn">CSSStyleSheet</span>();
-
-sheet.<span class="fn">replaceSync</span>(<span class="str">`
-  .modal-header {
-    background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
-    border-radius: 10px 10px 0 0;
-    font-family: 'Inter', sans-serif;
-  }
-  .modal {
-    border-radius: 12px;
-    border: none;
-    box-shadow: 0 20px 60px rgba(99, 102, 241, 0.35);
-  }
-  .btn-primary {
-    background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
-    border-radius: 6px;
-    border: none;
-  }
-  .form-group input, .form-group select, .form-group textarea {
-    border-radius: 6px;
-    border-color: #c7d2fe;
-    background: #f8fafc;
-  }
-`</span>);
-
-el.shadowRoot.adoptedStyleSheets = [
-  ...el.shadowRoot.adoptedStyleSheets,
-  sheet
-];</code></pre>
-      </div>
-      <p>
-        The <code>!important</code> declarations are needed because adopted stylesheets share
-        the same cascade layer as the component's internal sheet — specificity alone may not win.
-        Run this code after the element has connected (e.g. in a <code>DOMContentLoaded</code>
-        handler or at the bottom of <code>&lt;body&gt;</code>).
-      </p>
-
-      <div class="callout warning">
-        <div class="callout-title">⚠ Fragility</div>
-        <p>
-          Approach 2 targets class names that are implementation details of the engine.
-          A future version of ModalEngine could rename or restructure them, breaking your
-          overrides silently. The CSS-variable approach (Approach 1) is more stable because
-          it creates an explicit public API contract.
-        </p>
-      </div>
-
-      <h3>Approach 3 — Custom element subclass</h3>
-      <p>
-        For maximum control — different shadow DOM structure, extra animations, custom
-        close-button icon — extend <code>ModalEngine</code> directly and override
-        <code>connectedCallback</code> to inject your own stylesheet before calling
-        <code>super.connectedCallback()</code>. This keeps all the engine logic intact
-        while giving you full ownership of the visual layer.
-      </p>
-      <div class="code-wrap">
-        <button class="copy-btn" onclick="copyCode(this)">copy</button>
-        <pre><code><span class="kw">class</span> <span class="fn">ThemedModal</span> <span class="kw">extends</span> <span class="fn">ModalEngine</span> {
-  connectedCallback() {
-    <span class="kw">super</span>.<span class="fn">connectedCallback</span>();                 <span class="cmt">// build the shadow DOM first</span>
-    <span class="kw">const</span> extra = document.<span class="fn">createElement</span>(<span class="str">"style"</span>);
-    extra.textContent = <span class="str">`
-      .modal-header {
-        background: #18181b;
-        font-family: 'JetBrains Mono', monospace;
-        letter-spacing: 0.04em;
-        font-size: 12px;
-        text-transform: uppercase;
-        border-bottom: 2px solid #00b86b;
-      }
-      .modal { background: #18181b; border-color: #2e2e2e; }
-      .modal-body { background: #1a1a1a; }
-      .form-group label { color: #6b7a9a; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
-      .form-group input, .form-group select, .form-group textarea {
-        background: #111; color: #e0e0e0; border-color: #2e2e2e;
-      }
-      .btn { background: #222; color: #ccc; border-color: #444; }
-      .btn-primary { background: #00b86b; border-color: #00b86b; color: #000; }
-    `</span>;
-    <span class="kw">this</span>.shadowRoot.<span class="fn">appendChild</span>(extra);         <span class="cmt">// appended last = highest precedence</span>
-  }
+<span class="fn">procedural-modal</span> .<span class="fn">modal-header</span> {
+  background: <span class="str">linear-gradient(135deg, #6366f1, #4f46e5)</span>;
+  font-family: <span class="str">'Inter', sans-serif</span>;
 }
-customElements.<span class="fn">define</span>(<span class="str">"themed-modal"</span>, <span class="fn">ThemedModal</span>);
-
-<span class="cmt">// Use &lt;themed-modal&gt; instead of &lt;procedural-modal&gt; in RuntimeModal:</span>
-<span class="kw">class</span> <span class="fn">ThemedRuntime</span> <span class="kw">extends</span> <span class="fn">RuntimeModal</span> {
-  constructor() {
-    <span class="kw">super</span>();
-    <span class="cmt">// Replace the default component with the themed one</span>
-    document.body.querySelector(<span class="str">"procedural-modal"</span>)?.remove();
-    <span class="kw">const</span> el = document.<span class="fn">createElement</span>(<span class="str">"themed-modal"</span>);
-    document.body.<span class="fn">appendChild</span>(el);
-  }
+<span class="fn">procedural-modal</span> .<span class="fn">modal-body</span> {
+  background: <span class="str">#fff</span>;
+  border-bottom-color: <span class="str">#e2e8f0</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">modal-footer</span> {
+  background: <span class="str">#fff</span>;
+  border-top: <span class="str">1px solid #e2e8f0</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">label</span> {
+  color: <span class="str">#64748b</span>;
+  font-family: <span class="str">'Inter', sans-serif</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">input</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">select</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">textarea</span> {
+  background: <span class="str">#f8fafc</span>;
+  color: <span class="str">#0f172a</span>;
+  border-color: <span class="str">#c7d2fe</span>;
+  border-radius: <span class="str">6px</span>;
+  font-family: <span class="str">'Inter', sans-serif</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn</span> {
+  background: <span class="str">#f1f5f9</span>;
+  color: <span class="str">#475569</span>;
+  border-color: <span class="str">#e2e8f0</span>;
+  border-radius: <span class="str">6px</span>;
+  font-family: <span class="str">'Inter', sans-serif</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn-primary</span> {
+  background: <span class="str">linear-gradient(135deg, #6366f1, #4f46e5)</span>;
+  border-color: <span class="str">#4f46e5</span>;
+  border-radius: <span class="str">6px</span>;
+  font-family: <span class="str">'Inter', sans-serif</span>;
 }</code></pre>
       </div>
 
-      <div class="callout success">
-        <div class="callout-title">Best for design systems</div>
-        <p>
-          The subclass approach is ideal when ModalEngine is a dependency and you ship your own
-          design-system package on top. Publish <code>ThemedModal</code> as your own element name,
-          and consumers never need to know ModalEngine exists underneath.
-        </p>
+      <h3>Theme C — Warm Sepia</h3>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="fn">procedural-modal</span> .<span class="fn">modal</span> {
+  border-color: <span class="str">#c4a882</span>;
+  font-family: <span class="str">'Georgia', serif</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">modal-header</span> {
+  background: <span class="str">linear-gradient(to bottom, #8b6a3e, #6b4f2e)</span>;
+  font-family: <span class="str">'Georgia', serif</span>;
+  letter-spacing: <span class="str">0.02em</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">modal-body</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">modal-footer</span> {
+  background: <span class="str">#fdf6ec</span>;
+  border-color: <span class="str">#e8d5b7</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">label</span> {
+  color: <span class="str">#6b4f2e</span>;
+  font-style: <span class="str">italic</span>;
+  font-family: <span class="str">'Georgia', serif</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">input</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">select</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">textarea</span> {
+  background: <span class="str">#fffaf3</span>;
+  color: <span class="str">#3d2b1a</span>;
+  border-color: <span class="str">#c4a882</span>;
+  font-family: <span class="str">'Georgia', serif</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn</span> {
+  background: <span class="str">linear-gradient(to bottom, #f5e6cf, #e8d5b7)</span>;
+  color: <span class="str">#5a3e28</span>;
+  border-color: <span class="str">#c4a882</span>;
+  font-family: <span class="str">'Georgia', serif</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn-primary</span> {
+  background: <span class="str">linear-gradient(to bottom, #a0703a, #8b5e2e)</span>;
+  border-color: <span class="str">#7a4f24</span>;
+  font-family: <span class="str">'Georgia', serif</span>;
+}</code></pre>
       </div>
+
 
     </section>
 
@@ -1607,7 +1589,7 @@ customElements.<span class="fn">define</span>(<span class="str">"themed-modal"</
 </div>
 
 <!-- ── Inject the modal engine ── -->
-<script src="https://braveopotato.github.io/ModalEngine/modalengine.min.js"></script>
+<script src="modalengine.js"></script>
 <script>
 
 // ── Demo setup ──
