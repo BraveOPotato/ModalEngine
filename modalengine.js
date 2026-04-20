@@ -27,6 +27,7 @@ class ModalEngine extends HTMLElement {
         width: 500px; background: #f0f0f0;
         border: 1px solid #a0a0a0;
         box-shadow: 0 8px 24px rgba(0,0,0,0.4); position: fixed;
+        overflow: hidden;
       }
       .modal-header {
         background: linear-gradient(to bottom, #0078d7, #005a9e);
@@ -34,7 +35,7 @@ class ModalEngine extends HTMLElement {
         cursor: move; user-select: none;
         font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 14px;
       }
-      .modal-body { padding: 20px; background: #f0f0f0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+      .modal-body { padding: 20px; background: #f0f0f0; border-bottom: 1px solid #d0d0d0; font-family: 'Segoe UI', Tahoma, sans-serif; }
       .form-group { margin-bottom: 12px; }
       .form-group label { display: inline-block; font-size: 13px; margin-bottom: 4px; color: #222; }
       .form-group img { height: 100%; width: 100%; object-fit: contain; }
@@ -46,8 +47,7 @@ class ModalEngine extends HTMLElement {
       }
       textarea { resize: vertical; height: 60px; }
       .modal-footer {
-        background: #f0f0f0; padding: 10px; text-align: right;
-        border-top: 1px solid #d0d0d0;
+        background: transparent; padding: 10px; text-align: right;
       }
       .btn {
         min-width: 75px; padding: 6px 12px; font-size: 13px;
