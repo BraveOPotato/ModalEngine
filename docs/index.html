@@ -499,7 +499,7 @@
       <a href="#demo-simple" class="nav-link">Simple Form</a>
       <a href="#demo-multi" class="nav-link">Multi-Page</a>
       <a href="#demo-custom" class="nav-link">Custom Submit</a>
-      <a href="#demo-onnext" class="nav-link">onNext Hook</a>
+      <a href="#demo-onnext" class="nav-link">Dynamic Mutation</a>
       <a href="#pane-field" class="nav-link">Pane Picker</a>
     </nav>
   </aside>
@@ -1207,65 +1207,90 @@
 
     <!-- Demo: onNext Hook -->
     <section class="section" id="demo-onnext">
-      <h2>Demo — onNext Hook</h2>
+      <h2>Demo — Dynamic Form Mutation via onNext</h2>
       <hr class="section-divider"/>
-      <p>This three-page wizard attaches an <code>onNext</code> callback to the first two pages. Each callback simulates a 600 ms async operation (an analytics ping or a draft-save) and appends a timestamped log entry to the output below. Advance through the wizard to see the hook fire at each step.</p>
+      <p>
+        Because <code>runtime.getModal(name)</code> returns the live config object by reference,
+        an <code>onNext</code> callback can rewrite any subsequent page's fields <em>before the
+        user ever sees them</em>. The engine renders whatever is in the config at the moment it
+        advances — so mutations made during the hook take effect immediately.
+      </p>
+      <p>
+        The demo below is a cloud deployment wizard. Page 1 asks you to pick a cloud provider.
+        The <code>onNext</code> on that page inspects your choice and rewrites the
+        <strong>Provider Config</strong> page fields on the fly — swapping in the correct
+        credential labels and placeholders for AWS, GCP, or Azure before you see them.
+      </p>
 
       <div class="demo-box">
-        <p>Open the wizard, fill in fields, and click <strong>Next</strong> on each page to watch <code>onNext</code> execute before the engine advances.</p>
+        <p>Select a cloud provider on the first page, then click <strong>Next</strong> to watch the following page adapt to your choice.</p>
         <div class="demo-buttons">
-          <button class="trigger-btn" onclick="openOnNextModal()">Open onNext Demo</button>
+          <button class="trigger-btn" onclick="openOnNextModal()">Open Deployment Wizard</button>
         </div>
         <div class="result-box" id="onnext-result"></div>
       </div>
 
       <div class="code-wrap">
         <button class="copy-btn" onclick="copyCode(this)">copy</button>
-        <pre><code>{
-  <span class="key">modalName</span>: <span class="str">"onNextDemo"</span>,
-  <span class="key">title</span>:     <span class="str">"Onboarding"</span>,
-  <span class="key">submitUrl</span>: <span class="str">"/api/onboard"</span>,
+        <pre><code><span class="cmt">// Provider-specific credential fields — defined outside the config</span>
+<span class="kw">const</span> <span class="obj">providerFields</span> = {
+  <span class="str">"AWS"</span>: [
+    { <span class="key">type</span>: <span class="str">"text"</span>,     <span class="key">name</span>: <span class="str">"accessKeyId"</span>,     <span class="key">label</span>: <span class="str">"Access Key ID"</span>,          <span class="key">placeholder</span>: <span class="str">"AKIAIOSFODNN7EXAMPLE"</span> },
+    { <span class="key">type</span>: <span class="str">"password"</span>, <span class="key">name</span>: <span class="str">"secretAccessKey"</span>, <span class="key">label</span>: <span class="str">"Secret Access Key"</span>,       <span class="key">placeholder</span>: <span class="str">"wJalrXUtnFEMI/K7MDENG/…"</span> },
+    { <span class="key">type</span>: <span class="str">"select"</span>,   <span class="key">name</span>: <span class="str">"region"</span>,          <span class="key">label</span>: <span class="str">"Region"</span>,
+      <span class="key">options</span>: [<span class="str">"us-east-1"</span>, <span class="str">"us-west-2"</span>, <span class="str">"eu-west-1"</span>, <span class="str">"ap-southeast-1"</span>] }
+  ],
+  <span class="str">"GCP"</span>: [
+    { <span class="key">type</span>: <span class="str">"text"</span>,     <span class="key">name</span>: <span class="str">"projectId"</span>,       <span class="key">label</span>: <span class="str">"Project ID"</span>,              <span class="key">placeholder</span>: <span class="str">"my-gcp-project-123"</span> },
+    { <span class="key">type</span>: <span class="str">"textarea"</span>, <span class="key">name</span>: <span class="str">"serviceAccount"</span>,  <span class="key">label</span>: <span class="str">"Service Account JSON"</span>,    <span class="key">placeholder</span>: <span class="str">"{ \"type\": \"service_account\", … }"</span> },
+    { <span class="key">type</span>: <span class="str">"select"</span>,   <span class="key">name</span>: <span class="str">"region"</span>,          <span class="key">label</span>: <span class="str">"Region"</span>,
+      <span class="key">options</span>: [<span class="str">"us-central1"</span>, <span class="str">"europe-west1"</span>, <span class="str">"asia-east1"</span>] }
+  ],
+  <span class="str">"Azure"</span>: [
+    { <span class="key">type</span>: <span class="str">"text"</span>,     <span class="key">name</span>: <span class="str">"tenantId"</span>,        <span class="key">label</span>: <span class="str">"Tenant ID"</span>,               <span class="key">placeholder</span>: <span class="str">"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"</span> },
+    { <span class="key">type</span>: <span class="str">"text"</span>,     <span class="key">name</span>: <span class="str">"clientId"</span>,        <span class="key">label</span>: <span class="str">"Client ID"</span>,               <span class="key">placeholder</span>: <span class="str">"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"</span> },
+    { <span class="key">type</span>: <span class="str">"password"</span>, <span class="key">name</span>: <span class="str">"clientSecret"</span>,    <span class="key">label</span>: <span class="str">"Client Secret"</span>,           <span class="key">placeholder</span>: <span class="str">"…"</span> }
+  ]
+};
+
+<span class="obj">runtime</span>.<span class="fn">registerModals</span>([{
+  <span class="key">modalName</span>: <span class="str">"deployWizard"</span>,
+  <span class="key">title</span>:     <span class="str">"Deploy Application"</span>,
+  <span class="key">submitUrl</span>: <span class="str">"/api/deploy"</span>,
   <span class="key">pages</span>: [
     {
-      <span class="key">title</span>: <span class="str">"Account"</span>,
+      <span class="key">title</span>: <span class="str">"Target"</span>,
       <span class="key">fields</span>: [
-        { <span class="key">type</span>: <span class="str">"text"</span>,  <span class="key">name</span>: <span class="str">"username"</span>, <span class="key">label</span>: <span class="str">"Username"</span>     },
-        { <span class="key">type</span>: <span class="str">"email"</span>, <span class="key">name</span>: <span class="str">"email"</span>,    <span class="key">label</span>: <span class="str">"Email Address"</span> }
+        { <span class="key">type</span>: <span class="str">"text"</span>,   <span class="key">name</span>: <span class="str">"appName"</span>,  <span class="key">label</span>: <span class="str">"Application Name"</span>, <span class="key">placeholder</span>: <span class="str">"my-service"</span> },
+        { <span class="key">type</span>: <span class="str">"select"</span>, <span class="key">name</span>: <span class="str">"provider"</span>, <span class="key">label</span>: <span class="str">"Cloud Provider"</span>,
+          <span class="key">options</span>: [<span class="str">"AWS"</span>, <span class="str">"GCP"</span>, <span class="str">"Azure"</span>] }
       ],
-      <span class="key">onNext</span>: <span class="kw">async</span> (<span class="obj">cfg</span>, <span class="obj">data</span>) => {
-        <span class="cmt">// Simulate an analytics ping (600 ms)</span>
-        <span class="kw">await</span> <span class="kw">new</span> <span class="fn">Promise</span>(<span class="obj">r</span> => <span class="fn">setTimeout</span>(<span class="obj">r</span>, <span class="num">600</span>));
-        <span class="fn">logOnNext</span>(<span class="str">"Step 1 — analytics ping sent"</span>, <span class="obj">data</span>);
+      <span class="cmt">// Rewrite page 2's fields to match the chosen provider</span>
+      <span class="key">onNext</span>: (<span class="obj">cfg</span>, <span class="obj">data</span>) => {
+        <span class="obj">runtime</span>.<span class="fn">getModal</span>(<span class="str">"deployWizard"</span>).<span class="key">pages</span>[<span class="num">1</span>].<span class="key">fields</span> = <span class="obj">providerFields</span>[<span class="obj">data</span>.<span class="key">provider</span>];
       }
     },
     {
-      <span class="key">title</span>: <span class="str">"Preferences"</span>,
-      <span class="key">fields</span>: [
-        { <span class="key">type</span>: <span class="str">"select"</span>, <span class="key">name</span>: <span class="str">"plan"</span>, <span class="key">label</span>: <span class="str">"Plan"</span>,
-          <span class="key">options</span>: [<span class="str">"Free"</span>, <span class="str">"Pro"</span>, <span class="str">"Enterprise"</span>] },
-        { <span class="key">type</span>: <span class="str">"select"</span>, <span class="key">name</span>: <span class="str">"theme"</span>, <span class="key">label</span>: <span class="str">"Interface Theme"</span>,
-          <span class="key">options</span>: [<span class="str">"System"</span>, <span class="str">"Light"</span>, <span class="str">"Dark"</span>] }
-      ],
-      <span class="key">onNext</span>: <span class="kw">async</span> (<span class="obj">cfg</span>, <span class="obj">data</span>) => {
-        <span class="cmt">// Simulate a draft auto-save (600 ms)</span>
-        <span class="kw">await</span> <span class="kw">new</span> <span class="fn">Promise</span>(<span class="obj">r</span> => <span class="fn">setTimeout</span>(<span class="obj">r</span>, <span class="num">600</span>));
-        <span class="fn">logOnNext</span>(<span class="str">"Step 2 — draft saved"</span>, <span class="obj">data</span>);
-      }
+      <span class="key">title</span>: <span class="str">"Provider Config"</span>,
+      <span class="key">fields</span>: [] <span class="cmt">// populated by onNext above</span>
     },
     {
       <span class="key">title</span>: <span class="str">"Confirm"</span>,
       <span class="key">fields</span>: [
-        { <span class="key">type</span>: <span class="str">"textarea"</span>, <span class="key">name</span>: <span class="str">"notes"</span>,
-          <span class="key">label</span>: <span class="str">"Additional Notes (optional)"</span> }
+        { <span class="key">type</span>: <span class="str">"select"</span>, <span class="key">name</span>: <span class="str">"environment"</span>, <span class="key">label</span>: <span class="str">"Environment"</span>,
+          <span class="key">options</span>: [<span class="str">"staging"</span>, <span class="str">"production"</span>] },
+        { <span class="key">type</span>: <span class="str">"textarea"</span>, <span class="key">name</span>: <span class="str">"notes"</span>, <span class="key">label</span>: <span class="str">"Deployment Notes (optional)"</span> }
       ]
-      <span class="cmt">// No onNext — last page submits on Next click.</span>
     }
   ],
   <span class="key">onSubmit</span>: <span class="kw">async</span> (<span class="obj">cfg</span>, <span class="obj">data</span>) => ({ <span class="key">ok</span>: <span class="kw">true</span> }),
-  <span class="key">onSuccess</span>: (<span class="obj">cfg</span>, <span class="obj">data</span>) => {
-    <span class="fn">logOnNext</span>(<span class="str">"✓ Form submitted"</span>, <span class="obj">data</span>);
-  }
-}</code></pre>
+  <span class="key">onSuccess</span>: (<span class="obj">cfg</span>, <span class="obj">data</span>) => <span class="fn">showDeployResult</span>(<span class="obj">data</span>)
+}]);</code></pre>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">How it works</div>
+        <p><code>getModal()</code> returns the config by reference. Assigning a new array to <code>pages[1].fields</code> inside <code>onNext</code> mutates the live config in place. Because the engine reads the page's fields at render time — not at registration time — page 2 always reflects whatever was written during the hook.</p>
       </div>
     </section>
 
@@ -1722,6 +1747,11 @@ class RuntimeModal {
     if (!config) { console.error("Modal not found:", modalName); return; }
     this.#component.openModal(config);
   }
+  getModal(modalName) {
+    const config = this.#privateModals.find(m => m.modalName === modalName);
+    if (!config) { console.error("Modal not found:", modalName); return; }
+    return config;
+  }
 }
 
 // ── Demo setup ──
@@ -2011,62 +2041,70 @@ function openRetryModal()   {
   runtime.openModal("retryDemo");
 }
 
-// ── onNext log helper ──
-function logOnNext(label, data) {
-  const el = document.getElementById("onnext-result");
-  el.classList.add("visible");
-  const ts = new Date().toLocaleTimeString();
-  el.textContent += `[${ts}] ${label}\n         data snapshot: ${JSON.stringify(data)}\n\n`;
-}
+// ── Demo 7: onNext — dynamic form mutation ──
+const providerFields = {
+  "AWS": [
+    { type: "text",     name: "accessKeyId",     label: "Access Key ID",        placeholder: "AKIAIOSFODNN7EXAMPLE" },
+    { type: "password", name: "secretAccessKey", label: "Secret Access Key",     placeholder: "wJalrXUtnFEMI/K7MDENG/…" },
+    { type: "select",   name: "region",          label: "Region",
+      options: ["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1"] }
+  ],
+  "GCP": [
+    { type: "text",     name: "projectId",      label: "Project ID",            placeholder: "my-gcp-project-123" },
+    { type: "textarea", name: "serviceAccount", label: "Service Account JSON",  placeholder: '{ "type": "service_account", … }' },
+    { type: "select",   name: "region",         label: "Region",
+      options: ["us-central1", "europe-west1", "asia-east1"] }
+  ],
+  "Azure": [
+    { type: "text",     name: "tenantId",     label: "Tenant ID",     placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" },
+    { type: "text",     name: "clientId",     label: "Client ID",     placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" },
+    { type: "password", name: "clientSecret", label: "Client Secret", placeholder: "…" }
+  ]
+};
 
-// Demo 7: onNext hook demo
 runtime.registerModals([{
-  modalName: "onNextDemo",
-  title: "Onboarding",
-  submitUrl: "/api/onboard",
+  modalName: "deployWizard",
+  title: "Deploy Application",
+  submitUrl: "/api/deploy",
   pages: [
     {
-      title: "Account",
+      title: "Target",
       fields: [
-        { type: "text",  name: "username", label: "Username",     placeholder: "jane_smith" },
-        { type: "email", name: "email",    label: "Email Address", placeholder: "jane@example.com" }
+        { type: "text",   name: "appName",  label: "Application Name", placeholder: "my-service" },
+        { type: "select", name: "provider", label: "Cloud Provider",
+          options: ["AWS", "GCP", "Azure"] }
       ],
-      onNext: async (cfg, data) => {
-        await new Promise(r => setTimeout(r, 600));
-        logOnNext("Step 1 → analytics ping sent", data);
+      onNext: (cfg, data) => {
+        runtime.getModal("deployWizard").pages[1].fields = providerFields[data.provider];
       }
     },
     {
-      title: "Preferences",
-      fields: [
-        { type: "select", name: "plan",  label: "Plan",
-          options: ["Free", "Pro", "Enterprise"] },
-        { type: "select", name: "theme", label: "Interface Theme",
-          options: ["System", "Light", "Dark"] }
-      ],
-      onNext: async (cfg, data) => {
-        await new Promise(r => setTimeout(r, 600));
-        logOnNext("Step 2 → draft auto-saved", data);
-      }
+      title: "Provider Config",
+      fields: [] // populated by onNext above
     },
     {
       title: "Confirm",
       fields: [
-        { type: "textarea", name: "notes", label: "Additional Notes (optional)",
-          placeholder: "Anything we should know…" }
+        { type: "select",   name: "environment", label: "Environment",
+          options: ["staging", "production"] },
+        { type: "textarea", name: "notes",       label: "Deployment Notes (optional)" }
       ]
     }
   ],
   onSubmit: async (cfg, data) => ({ ok: true }),
   onSuccess: (cfg, data) => {
-    logOnNext("✓ Form submitted successfully", data);
+    const el = document.getElementById("onnext-result");
+    el.classList.add("visible");
+    el.textContent = "✓ Deployment config submitted:\n" + JSON.stringify(data, null, 2);
   }
 }]);
 
 function openOnNextModal() {
+  // Reset page 2 fields so re-opens start clean
+  runtime.getModal("deployWizard").pages[1].fields = [];
   document.getElementById("onnext-result").textContent = "";
   document.getElementById("onnext-result").classList.remove("visible");
-  runtime.openModal("onNextDemo");
+  runtime.openModal("deployWizard");
 }
 
 // ── Copy buttons ──
