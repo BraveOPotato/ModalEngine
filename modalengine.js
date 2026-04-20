@@ -131,6 +131,7 @@ class ModalEngine extends HTMLElement {
     });
   }
 
+  // Renders the modal on the user's screen.
   async openModal(config) {
     this.#installerConfig = config;
     this.#modalOverlay.style.display = "flex";
@@ -152,6 +153,7 @@ class ModalEngine extends HTMLElement {
     return raw; // already { label: value }
   }
 
+  // Renders the modal page depending on the contents.
   async renderPage() {
     const page = this.#installerConfig.pages[this.#currentPage];
     this.#modalHeader.textContent = `${this.#installerConfig.title} — ${page.title}`;
@@ -358,23 +360,39 @@ class ModalEngine extends HTMLElement {
     this.#modalBody.appendChild(wrapper);
   }
 
+  // Saves the current page data into a private formDataStore object.
+  // So that multi-page modal data is saved.
   saveCurrentPageData() {
     const inputs = this.#modalBody.querySelectorAll("input, select, textarea");
     inputs.forEach(input => { if (input.name) this.#formDataStore[input.name] = input.value; });
   }
 
+  // TODO: render a loading icon while the callback
+  // is getting handled.
+  renderLoadingIcon() {
+    
+  }
+
+  // "Next"/"Submit" button handler.
   async nextPage() {
     this.saveCurrentPageData();
     if (this.#currentPage < this.#installerConfig.pages.length - 1) {
+      if (this.#installerConfig.pages[this.#currentPage].onNext) {
+        this.renderLoadingIcon();
+        const formDataJson = this.getJsonData();
+        await this.#installerConfig.pages[this.#currentPage].onNext(this.#installerConfig, formDataJson);
+      }
       this.#currentPage++; await this.renderPage();
     } else { this.submitForm(); }
   }
 
+  // "Back" button on the modal.
   async prevPage() {
     this.saveCurrentPageData();
     if (this.#currentPage > 0) { this.#currentPage--; await this.renderPage(); }
   }
 
+  // Retrieves a cookie by name.
   getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {
@@ -388,11 +406,14 @@ class ModalEngine extends HTMLElement {
     return cookieValue;
   }
 
+  // Removes the hidden input items from the hidden form.
   removeHiddenInputs() {
     this.#installerForm.querySelectorAll('input[type="hidden"]').forEach(el => el.remove());
   }
 
-  async submitForm() {
+  // Turns the data that has been entered so far into 
+  // usable JSON.
+  getJsonData() {
     this.removeHiddenInputs();
     for (const [key, value] of Object.entries(this.#formDataStore)) {
       const hidden = document.createElement("input");
@@ -400,9 +421,14 @@ class ModalEngine extends HTMLElement {
       this.#installerForm.appendChild(hidden);
     }
     const formData = new FormData(this.#installerForm);
-    const formDataJson = Object.fromEntries(formData.entries());
-    const csrfToken = this.getCookie("csrftoken");
+    return Object.fromEntries(formData.entries());
+  }
+
+  // Submits the form.
+  async submitForm() {
+    const formDataJson = this.getJsonData();
     let response = null;
+    const csrfToken = this.getCookie("csrftoken");
     if (this.#installerConfig.onSubmit) {
       response = await this.#installerConfig.onSubmit(this.#installerConfig, formDataJson);
     } else {
@@ -431,10 +457,23 @@ class RuntimeModal {
     this.#component = document.createElement("procedural-modal");
     document.body.appendChild(this.#component);
   }
+  
+  // Registers the modal to be opened/rendered later.
   registerModals(modals) { this.#privateModals.push(...modals); }
+
+  // Renders the modal on the user's screen.
   openModal(modalName) {
     const config = this.#privateModals.find(m => m.modalName === modalName);
     if (!config) { console.error("Modal not found:", modalName); return; }
     this.#component.openModal(config);
+  }
+
+  // Returns the underlying modal config object.
+  // Since it's returned by reference, modifying this
+  // object will modify the form.
+  getModal(modalName) {
+    const config = this.#privateModals.find(m => m.modalName === modalName);
+    if (!config) { console.error("Modal not found:", modalName); return; }
+    return config;
   }
 }
