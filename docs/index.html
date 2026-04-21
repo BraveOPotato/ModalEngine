@@ -1243,51 +1243,23 @@
     { <span class="key">type</span>: <span class="str">"select"</span>,   <span class="key">name</span>: <span class="str">"region"</span>,          <span class="key">label</span>: <span class="str">"Region"</span>,
       <span class="key">options</span>: [<span class="str">"us-east-1"</span>, <span class="str">"us-west-2"</span>, <span class="str">"eu-west-1"</span>, <span class="str">"ap-southeast-1"</span>] }
   ],
-  <span class="str">"GCP"</span>: [
-    { <span class="key">type</span>: <span class="str">"text"</span>,     <span class="key">name</span>: <span class="str">"projectId"</span>,       <span class="key">label</span>: <span class="str">"Project ID"</span>,              <span class="key">placeholder</span>: <span class="str">"my-gcp-project-123"</span> },
-    { <span class="key">type</span>: <span class="str">"textarea"</span>, <span class="key">name</span>: <span class="str">"serviceAccount"</span>,  <span class="key">label</span>: <span class="str">"Service Account JSON"</span>,    <span class="key">placeholder</span>: <span class="str">"{ \"type\": \"service_account\", … }"</span> },
-    { <span class="key">type</span>: <span class="str">"select"</span>,   <span class="key">name</span>: <span class="str">"region"</span>,          <span class="key">label</span>: <span class="str">"Region"</span>,
-      <span class="key">options</span>: [<span class="str">"us-central1"</span>, <span class="str">"europe-west1"</span>, <span class="str">"asia-east1"</span>] }
-  ],
-  <span class="str">"Azure"</span>: [
-    { <span class="key">type</span>: <span class="str">"text"</span>,     <span class="key">name</span>: <span class="str">"tenantId"</span>,        <span class="key">label</span>: <span class="str">"Tenant ID"</span>,               <span class="key">placeholder</span>: <span class="str">"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"</span> },
-    { <span class="key">type</span>: <span class="str">"text"</span>,     <span class="key">name</span>: <span class="str">"clientId"</span>,        <span class="key">label</span>: <span class="str">"Client ID"</span>,               <span class="key">placeholder</span>: <span class="str">"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"</span> },
-    { <span class="key">type</span>: <span class="str">"password"</span>, <span class="key">name</span>: <span class="str">"clientSecret"</span>,    <span class="key">label</span>: <span class="str">"Client Secret"</span>,           <span class="key">placeholder</span>: <span class="str">"…"</span> }
-  ]
+  <span class="str">"GCP"</span>: [ <span class="cmt">/* … */</span> ],
+  <span class="str">"Azure"</span>: [ <span class="cmt">/* … */</span> ]
 };
 
 <span class="obj">runtime</span>.<span class="fn">registerModals</span>([{
   <span class="key">modalName</span>: <span class="str">"deployWizard"</span>,
-  <span class="key">title</span>:     <span class="str">"Deploy Application"</span>,
-  <span class="key">submitUrl</span>: <span class="str">"/api/deploy"</span>,
   <span class="key">pages</span>: [
     {
       <span class="key">title</span>: <span class="str">"Target"</span>,
-      <span class="key">fields</span>: [
-        { <span class="key">type</span>: <span class="str">"text"</span>,   <span class="key">name</span>: <span class="str">"appName"</span>,  <span class="key">label</span>: <span class="str">"Application Name"</span>, <span class="key">placeholder</span>: <span class="str">"my-service"</span> },
-        { <span class="key">type</span>: <span class="str">"select"</span>, <span class="key">name</span>: <span class="str">"provider"</span>, <span class="key">label</span>: <span class="str">"Cloud Provider"</span>,
-          <span class="key">options</span>: [<span class="str">"AWS"</span>, <span class="str">"GCP"</span>, <span class="str">"Azure"</span>] }
-      ],
-      <span class="cmt">// Rewrite page 2's fields to match the chosen provider</span>
+      <span class="key">fields</span>: [ <span class="cmt">/* appName + provider select */</span> ],
       <span class="key">onNext</span>: (<span class="obj">cfg</span>, <span class="obj">data</span>) => {
         <span class="obj">runtime</span>.<span class="fn">getModal</span>(<span class="str">"deployWizard"</span>).<span class="key">pages</span>[<span class="num">1</span>].<span class="key">fields</span> = <span class="obj">providerFields</span>[<span class="obj">data</span>.<span class="key">provider</span>];
       }
     },
-    {
-      <span class="key">title</span>: <span class="str">"Provider Config"</span>,
-      <span class="key">fields</span>: [] <span class="cmt">// populated by onNext above</span>
-    },
-    {
-      <span class="key">title</span>: <span class="str">"Confirm"</span>,
-      <span class="key">fields</span>: [
-        { <span class="key">type</span>: <span class="str">"select"</span>, <span class="key">name</span>: <span class="str">"environment"</span>, <span class="key">label</span>: <span class="str">"Environment"</span>,
-          <span class="key">options</span>: [<span class="str">"staging"</span>, <span class="str">"production"</span>] },
-        { <span class="key">type</span>: <span class="str">"textarea"</span>, <span class="key">name</span>: <span class="str">"notes"</span>, <span class="key">label</span>: <span class="str">"Deployment Notes (optional)"</span> }
-      ]
-    }
-  ],
-  <span class="key">onSubmit</span>: <span class="kw">async</span> (<span class="obj">cfg</span>, <span class="obj">data</span>) => ({ <span class="key">ok</span>: <span class="kw">true</span> }),
-  <span class="key">onSuccess</span>: (<span class="obj">cfg</span>, <span class="obj">data</span>) => <span class="fn">showDeployResult</span>(<span class="obj">data</span>)
+    { <span class="key">title</span>: <span class="str">"Provider Config"</span>, <span class="key">fields</span>: [] },
+    { <span class="key">title</span>: <span class="str">"Confirm"</span>, <span class="key">fields</span>: [ <span class="cmt">/* environment + notes */</span> ] }
+  ]
 }]);</code></pre>
       </div>
 
@@ -1324,7 +1296,7 @@
 <span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">textarea</span> { <span class="cmt">/* all input controls */</span> }</code></pre>
       </div>
 
-      <p>The three themes below show what's possible. Each is self-contained CSS you can paste straight into your stylesheet.</p>
+      <p>The five themes below show what's possible. Each is self-contained CSS you can paste straight into your stylesheet.</p>
 
       <!-- ── Theme previews ── -->
       <style>
@@ -1373,6 +1345,26 @@
         .mock-modal.sepia .mock-input  { background: #fffaf3; color: #3d2b1a; border-color: #c4a882; border-radius: 2px; font-family: 'Georgia', serif; }
         .mock-modal.sepia .mock-btn    { background: linear-gradient(to bottom, #f5e6cf, #e8d5b7); color: #5a3e28; border-color: #c4a882; font-family: 'Georgia', serif; }
         .mock-modal.sepia .mock-btn-p  { background: linear-gradient(to bottom, #a0703a, #8b5e2e); border-color: #7a4f24; font-family: 'Georgia', serif; }
+
+        /* ── Theme D: Neon Cyberpunk ── */
+        .mock-modal.cyberpunk { border-color: #ff00ff; box-shadow: 0 0 16px rgba(255,0,255,0.4), 0 0 32px rgba(0,255,255,0.15); font-family: 'Courier New', monospace; }
+        .mock-modal.cyberpunk .mock-header { background: linear-gradient(135deg, #1a0033, #0d001a); color: #ff00ff; font-family: 'Courier New', monospace; text-shadow: 0 0 6px #ff00ff; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid #ff00ff; }
+        .mock-modal.cyberpunk .mock-body   { background: #0d001a; }
+        .mock-modal.cyberpunk .mock-footer { background: #0d001a; }
+        .mock-modal.cyberpunk .mock-label  { color: #00ffff; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; text-shadow: 0 0 4px #00ffff; }
+        .mock-modal.cyberpunk .mock-input  { background: #0a0015; color: #ff00ff; border-color: #ff00ff; border-radius: 0; font-family: 'Courier New', monospace; }
+        .mock-modal.cyberpunk .mock-btn    { background: transparent; color: #00ffff; border-color: #00ffff; font-family: 'Courier New', monospace; letter-spacing: 0.04em; text-transform: uppercase; }
+        .mock-modal.cyberpunk .mock-btn-p  { background: linear-gradient(135deg, #ff00ff, #aa00ff); border-color: #ff00ff; color: #fff; font-family: 'Courier New', monospace; letter-spacing: 0.04em; }
+
+        /* ── Theme E: Newspaper ── */
+        .mock-modal.newspaper { border: 2px solid #111; font-family: 'Georgia', 'Times New Roman', serif; box-shadow: 5px 5px 0 #111; }
+        .mock-modal.newspaper .mock-header { background: #111; color: #f5f0e8; font-family: 'Georgia', serif; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+        .mock-modal.newspaper .mock-body   { background: #f5f0e8; background-image: repeating-linear-gradient(transparent, transparent 17px, rgba(0,0,0,0.06) 18px); }
+        .mock-modal.newspaper .mock-footer { background: #f5f0e8; border-top: 1px solid #bbb; }
+        .mock-modal.newspaper .mock-label  { color: #111; font-family: 'Georgia', serif; font-weight: bold; font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; }
+        .mock-modal.newspaper .mock-input  { background: #fff; color: #111; border: 1px solid #111; border-radius: 0; font-family: 'Georgia', serif; }
+        .mock-modal.newspaper .mock-btn    { background: #f5f0e8; color: #111; border: 2px solid #111; border-radius: 0; font-family: 'Georgia', serif; letter-spacing: 0.03em; text-transform: uppercase; box-shadow: 2px 2px 0 #111; }
+        .mock-modal.newspaper .mock-btn-p  { background: #111; color: #f5f0e8; border: 2px solid #111; border-radius: 0; font-family: 'Georgia', serif; letter-spacing: 0.03em; box-shadow: 2px 2px 0 #555; }
       </style>
 
       <div class="theme-gallery">
@@ -1422,7 +1414,35 @@
           </div>
         </div>
 
-        <!-- Sepia: spans full width row below -->
+        <!-- Cyberpunk -->
+        <div class="theme-card">
+          <div class="theme-card-label">Neon Cyberpunk</div>
+          <div class="mock-modal-wrap">
+            <div class="mock-modal cyberpunk">
+              <div class="mock-header">My App — Settings</div>
+              <div class="mock-body">
+                <div class="mock-field"><label class="mock-label">Username</label><input class="mock-input" value="jdoe" readonly/></div>
+                <div class="mock-field"><label class="mock-label">Email</label><input class="mock-input" value="j@example.com" readonly/></div>
+              </div>
+              <div class="mock-footer"><span class="mock-btn">Close</span><span class="mock-btn-p">Next</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Newspaper -->
+        <div class="theme-card">
+          <div class="theme-card-label">Newspaper</div>
+          <div class="mock-modal-wrap">
+            <div class="mock-modal newspaper">
+              <div class="mock-header">My App — Settings</div>
+              <div class="mock-body">
+                <div class="mock-field"><label class="mock-label">Username</label><input class="mock-input" value="jdoe" readonly/></div>
+                <div class="mock-field"><label class="mock-label">Email</label><input class="mock-input" value="j@example.com" readonly/></div>
+              </div>
+              <div class="mock-footer"><span class="mock-btn">Close</span><span class="mock-btn-p">Next</span></div>
+            </div>
+          </div>
+        </div>
 
       </div><!-- /.theme-gallery -->
 
@@ -1582,6 +1602,142 @@
 }</code></pre>
       </div>
 
+      <h3>Theme D — Neon Cyberpunk</h3>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="fn">procedural-modal</span> .<span class="fn">modal</span> {
+  border-color: <span class="str">#ff00ff</span>;
+  box-shadow: <span class="str">0 0 20px rgba(255,0,255,0.4), 0 0 40px rgba(0,255,255,0.2)</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">modal-header</span> {
+  background: <span class="str">linear-gradient(135deg, #1a0033, #0d001a)</span>;
+  color: <span class="str">#ff00ff</span>;
+  font-family: <span class="str">'Courier New', monospace</span>;
+  text-shadow: <span class="str">0 0 8px #ff00ff</span>;
+  letter-spacing: <span class="str">0.08em</span>;
+  text-transform: <span class="str">uppercase</span>;
+  border-bottom: <span class="str">1px solid #ff00ff</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">modal-body</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">modal-footer</span> {
+  background: <span class="str">#0d001a</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">label</span> {
+  color: <span class="str">#00ffff</span>;
+  font-family: <span class="str">'Courier New', monospace</span>;
+  font-size: <span class="str">11px</span>;
+  letter-spacing: <span class="str">0.1em</span>;
+  text-transform: <span class="str">uppercase</span>;
+  text-shadow: <span class="str">0 0 6px #00ffff</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">input</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">select</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">textarea</span> {
+  background: <span class="str">#0a0015</span>;
+  color: <span class="str">#ff00ff</span>;
+  border-color: <span class="str">#ff00ff</span>;
+  border-radius: <span class="str">0</span>;
+  font-family: <span class="str">'Courier New', monospace</span>;
+  box-shadow: <span class="str">inset 0 0 6px rgba(255,0,255,0.2)</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn</span> {
+  background: <span class="str">transparent</span>;
+  color: <span class="str">#00ffff</span>;
+  border-color: <span class="str">#00ffff</span>;
+  font-family: <span class="str">'Courier New', monospace</span>;
+  letter-spacing: <span class="str">0.06em</span>;
+  text-transform: <span class="str">uppercase</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn</span>:hover {
+  background: <span class="str">rgba(0,255,255,0.1)</span>;
+  box-shadow: <span class="str">0 0 8px rgba(0,255,255,0.4)</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn-primary</span> {
+  background: <span class="str">linear-gradient(135deg, #ff00ff, #aa00ff)</span>;
+  border-color: <span class="str">#ff00ff</span>;
+  color: <span class="str">#fff</span>;
+  font-family: <span class="str">'Courier New', monospace</span>;
+  letter-spacing: <span class="str">0.06em</span>;
+  box-shadow: <span class="str">0 0 10px rgba(255,0,255,0.5)</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn-primary</span>:hover {
+  background: <span class="str">linear-gradient(135deg, #ff44ff, #cc22ff)</span>;
+}</code></pre>
+      </div>
+
+      <h3>Theme E — Newspaper / Editorial</h3>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><code><span class="fn">procedural-modal</span> .<span class="fn">modal</span> {
+  border: <span class="str">2px solid #111</span>;
+  font-family: <span class="str">'Georgia', 'Times New Roman', serif</span>;
+  box-shadow: <span class="str">6px 6px 0 #111</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">modal-header</span> {
+  background: <span class="str">#111</span>;
+  color: <span class="str">#f5f0e8</span>;
+  font-family: <span class="str">'Georgia', serif</span>;
+  font-size: <span class="str">13px</span>;
+  letter-spacing: <span class="str">0.04em</span>;
+  text-transform: <span class="str">uppercase</span>;
+  border-bottom: <span class="str">3px double #555</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">modal-body</span> {
+  background: <span class="str">#f5f0e8</span>;
+  background-image: <span class="str">repeating-linear-gradient(
+    transparent, transparent 23px, rgba(0,0,0,0.06) 24px
+  )</span>;
+  border-bottom: <span class="str">2px solid #111</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">modal-footer</span> {
+  background: <span class="str">#f5f0e8</span>;
+  border-top: <span class="str">1px solid #bbb</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">label</span> {
+  color: <span class="str">#111</span>;
+  font-family: <span class="str">'Georgia', serif</span>;
+  font-weight: <span class="str">bold</span>;
+  font-size: <span class="str">12px</span>;
+  letter-spacing: <span class="str">0.05em</span>;
+  text-transform: <span class="str">uppercase</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">input</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">select</span>,
+<span class="fn">procedural-modal</span> .<span class="fn">form-group</span> <span class="fn">textarea</span> {
+  background: <span class="str">#fff</span>;
+  color: <span class="str">#111</span>;
+  border: <span class="str">1px solid #111</span>;
+  border-radius: <span class="str">0</span>;
+  font-family: <span class="str">'Georgia', serif</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn</span> {
+  background: <span class="str">#f5f0e8</span>;
+  color: <span class="str">#111</span>;
+  border: <span class="str">2px solid #111</span>;
+  border-radius: <span class="str">0</span>;
+  font-family: <span class="str">'Georgia', serif</span>;
+  font-size: <span class="str">12px</span>;
+  letter-spacing: <span class="str">0.04em</span>;
+  text-transform: <span class="str">uppercase</span>;
+  box-shadow: <span class="str">2px 2px 0 #111</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn</span>:hover {
+  background: <span class="str">#e8e3d8</span>;
+  box-shadow: <span class="str">1px 1px 0 #111</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn-primary</span> {
+  background: <span class="str">#111</span>;
+  color: <span class="str">#f5f0e8</span>;
+  border: <span class="str">2px solid #111</span>;
+  border-radius: <span class="str">0</span>;
+  font-family: <span class="str">'Georgia', serif</span>;
+  letter-spacing: <span class="str">0.04em</span>;
+  box-shadow: <span class="str">2px 2px 0 #555</span>;
+}
+<span class="fn">procedural-modal</span> .<span class="fn">btn-primary</span>:hover {
+  background: <span class="str">#333</span>;
+}</code></pre>
+      </div>
 
     </section>
 
@@ -1672,8 +1828,8 @@ runtime.registerModals([{
   }],
   onSubmit: async (cfg, data) => {
     retryAttempts++;
-    await new Promise(r => setTimeout(r, 600)); // simulate latency
-    return { ok: retryAttempts % 2 === 0 };     // alternates fail/succeed
+    await new Promise(r => setTimeout(r, 600));
+    return { ok: retryAttempts % 2 === 0 };
   },
   onSuccess: (cfg, data) => {
     retryAttempts = 0;
@@ -1699,7 +1855,6 @@ runtime.registerModals([{
       fields: [
         {
           type: "select", name: "assignee", label: "Assign To",
-          // Async callback — simulates a 400ms API fetch
           options: async () => {
             await new Promise(r => setTimeout(r, 400));
             return {
@@ -1712,7 +1867,6 @@ runtime.registerModals([{
         },
         {
           type: "select", name: "priority", label: "Priority",
-          // Plain object — label differs from submitted value
           options: {
             "🔴 Critical": "p0",
             "🟠 High":     "p1",
@@ -1761,23 +1915,19 @@ runtime.registerModals([{
         { id: "db-01",  label: "db-01.prod"  },
         { id: "db-02",  label: "db-02.prod"  }
       ],
-      // Field-level async callback: simulates fetching the user pool for web hosts.
       options: async (item) => {
-        await new Promise(r => setTimeout(r, 350)); // simulate API latency
-        const webUsers = [
+        await new Promise(r => setTimeout(r, 350));
+        return [
           { id: "alice", label: "Alice Chen"   },
           { id: "bob",   label: "Bob Martinez" },
           { id: "eve",   label: "Eve Larsson"  }
         ];
-        return webUsers;
       },
       items: [
-        { id: "web-01", label: "web-01.prod" },  // uses field-level callback
-        { id: "web-02", label: "web-02.prod" },  // uses field-level callback
+        { id: "web-01", label: "web-01.prod" },
+        { id: "web-02", label: "web-02.prod" },
         {
           id: "db-01", label: "db-01.prod",
-          // Item-level async callback: DB hosts fetch a different user pool.
-          // Returns { options, checked } — pre-checked state comes from the "server"
           options: async (item) => {
             await new Promise(r => setTimeout(r, 350));
             const checkedMap = { "db-01": ["carol", "david"], "db-02": ["david"] };
@@ -1805,10 +1955,7 @@ runtime.registerModals([{
           }
         }
       ],
-      checked: {
-        "web-01": ["alice", "bob"]
-        // db-01 and db-02 checked state is returned by their async callbacks
-      }
+      checked: { "web-01": ["alice", "bob"] }
     }]
   }],
   onSubmit: async (cfg, data) => ({ ok: true }),
@@ -1832,24 +1979,24 @@ runtime.registerModals([{
       label: "Assign users to groups",
       leftLabel: "Groups",
       rightLabel: "Users",
-      options: [                        // default pool (Engineering + Ops share these)
+      options: [
         { id: "alice", label: "Alice Chen"   },
         { id: "bob",   label: "Bob Martinez" },
         { id: "eve",   label: "Eve Larsson"  }
       ],
       items: [
-        { id: "eng",    label: "Engineering" },   // uses field-level options
+        { id: "eng",    label: "Engineering" },
         {
           id: "design", label: "Design",
-          options: [                              // Design has its own roster
+          options: [
             { id: "carol", label: "Carol Kim"   },
             { id: "eve",   label: "Eve Larsson" }
           ]
         },
-        { id: "ops",    label: "Operations"   },  // uses field-level options
+        { id: "ops",    label: "Operations" },
         {
           id: "admins", label: "Admins",
-          options: [                              // Admins: only senior members
+          options: [
             { id: "alice", label: "Alice Chen"   },
             { id: "david", label: "David Osei"   }
           ]
@@ -1918,7 +2065,7 @@ runtime.registerModals([{
     },
     {
       title: "Provider Config",
-      fields: [] // populated by onNext above
+      fields: []
     },
     {
       title: "Confirm",
@@ -1938,7 +2085,6 @@ runtime.registerModals([{
 }]);
 
 function openOnNextModal() {
-  // Reset page 2 fields so re-opens start clean
   runtime.getModal("deployWizard").pages[1].fields = [];
   document.getElementById("onnext-result").textContent = "";
   document.getElementById("onnext-result").classList.remove("visible");
